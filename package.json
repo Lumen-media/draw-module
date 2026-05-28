@@ -1,0 +1,24 @@
+{
+  "name": "draw-module",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "lumen-module build",
+    "pack": "lumen-module pack",
+    "validate": "lumen-module validate"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@lumen/module-build": "workspace:*",
+    "@lumen/module-cli": "workspace:*",
+    "@lumen/module-sdk": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0"
+  }
+}

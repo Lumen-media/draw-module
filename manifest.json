@@ -1,0 +1,11 @@
+{
+  "id": "com.example.draw-module",
+  "name": "draw-module",
+  "version": "0.0.0",
+  "api": "^0.1.0",
+  "minLumenVersion": "0.0.0",
+  "description": "A Lumen module",
+  "author": "",
+  "entry": "main.js",
+  "license": "MIT"
+}
