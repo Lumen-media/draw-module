@@ -1,6 +1,6 @@
 {
   "name": "draw-module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,9 +13,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@lumen/module-build": "workspace:*",
-    "@lumen/module-cli": "workspace:*",
-    "@lumen/module-sdk": "workspace:*",
+    "@lumen-media/module-cli": "^0.0.1",
+    "@lumen-media/module-sdk": "^0.0.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.7.2",

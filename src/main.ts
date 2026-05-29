@@ -1,11 +1,21 @@
-import { type LumenHost, LumenPlugin } from "@lumen/module-sdk";
+import { type LumenHost, LumenPlugin } from "@lumen-media/module-sdk";
+import { createDrawConfigurator } from "./DrawConfigurator.js";
 
 export default class DrawModulePlugin extends LumenPlugin {
 	async onload(host: LumenHost): Promise<void> {
-		host.commands.add({
-			id: "draw-module.hello",
-			title: "draw-module: hello",
-			run: () => host.ui.notify({ message: "Hello from draw-module!" }),
+		const DrawPanel = createDrawConfigurator(host);
+
+		host.panels.add({
+			id: "draw-module.configurator",
+			slot: "dialog",
+			component: DrawPanel,
+		});
+
+		host.menus.addItem("tools", {
+			type: "action",
+			id: "draw-module.open",
+			label: "Draw",
+			onClick: () => host.ui.openDialog("draw-module.configurator"),
 		});
 	}
 }
