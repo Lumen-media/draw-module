@@ -116,28 +116,20 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
     if (!loaded) return null;
 
     return (
-      <div className="flex relative" style={{ width: 860, maxWidth: "95vw", maxHeight: "80vh" }}>
+      <div className="relative flex w-[56.25rem] max-w-[95vw] max-h-[80vh]">
 
         {close && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={close}
-            style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}
-          >
+          <Button variant="ghost" size="icon-sm" onClick={close} className="absolute top-3 right-3 z-10">
             <IconX size={16} />
           </Button>
         )}
 
-        <Card
-          className="flex flex-col gap-5 p-4 overflow-y-auto border-none rounded-r-none"
-          style={{ flex: 1, padding: 24, minWidth: 0 }}
-        >
-          <div style={{ paddingRight: 32 }}>
+        <Card className="flex flex-1 flex-col gap-5 min-w-0 p-6 border-none rounded-r-none">
+          <div className="pr-8">
             <h2 className="text-lg leading-none font-bold m-0">Draw Configurator</h2>
           </div>
 
-          <div className="flex flex-col gap-3 bg-secondary rounded-lg" style={{ padding: "14px 18px" }}>
+          <div className="flex flex-col gap-3 bg-secondary rounded-lg py-3.5 px-4.5">
             <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
               <Switch
                 id="remove-duplicates"
@@ -160,20 +152,20 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
             </Label>
           </div>
 
-          <div className="flex flex-col gap-2" style={{ flex: 1 }}>
+          <div className="flex flex-col gap-2">
             <Label className="text-muted-foreground">Participants (one per line)</Label>
-            <TextEditor
-              ref={editorRef}
-              defaultValue={participants}
-              placeholder="One name per line..."
-              debounce={300}
-              onChange={async (md: string) => {
-                setParticipants(md);
-                await host.data.json.set("participants", md);
-              }}
-              style={{ minHeight: 200 }}
-              className="bg-secondary border-none rounded-lg"
-            />
+            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl">
+              <TextEditor
+                ref={editorRef}
+                defaultValue={participants}
+                placeholder="One name per line..."
+                debounce={300}
+                onChange={async (md: string) => {
+                  setParticipants(md);
+                  await host.data.json.set("participants", md);
+                }}
+              />
+            </ScrollArea>
             <p className="text-xs text-muted-foreground m-0">
               Paste or type names. Duplicates and repeats will be handled by the settings above.
             </p>
@@ -184,10 +176,10 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
               Ready to draw from {eligible.length} name{eligible.length !== 1 ? "s" : ""}
             </span>
             <div className="flex gap-2">
-              <Button size="default" variant="outline" onClick={handleReset} className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
                 <IconRotateCcw size={16} /> Reset
               </Button>
-              <Button size="default" onClick={handleDraw} className="flex items-center gap-2">
+              <Button onClick={handleDraw} className="flex items-center gap-2">
                 <IconShuffle size={16} /> Draw
               </Button>
             </div>
@@ -196,19 +188,12 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
 
         <Separator orientation="vertical" />
 
-        <Card
-          className="flex flex-col gap-3 p-4 border-none rounded-l-none bg-secondary"
-          style={{ width: 280, padding: 24 }}
-        >
+        <Card className="flex flex-col gap-3 w-70 p-6 border-none rounded-l-none bg-secondary">
           <h3 className="text-base leading-none font-bold m-0">Already Drawn</h3>
-          <ScrollArea style={{ flex: 1 }}>
+          <ScrollArea className="flex-1">
             <div className="flex flex-col gap-2">
               {sortedDrawn.map((entry) => (
-                <div
-                  key={entry.order}
-                  className="flex items-center justify-between bg-card rounded-lg"
-                  style={{ padding: "10px 14px" }}
-                >
+                <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg py-2.5 px-3.5">
                   <span className="text-sm">{entry.name}</span>
                   <Badge variant="secondary">#{entry.order}</Badge>
                 </div>
