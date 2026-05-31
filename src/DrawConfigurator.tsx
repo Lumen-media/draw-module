@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { LumenHost } from "@lumen-media/module-sdk";
-import { Badge, Button, Card, Label, ScrollArea, Separator, Switch, Textarea } from "@lumen-media/module-sdk/ui";
+import { Badge, Button, Card, Label, ScrollArea, Separator, Switch, TextEditor } from "@lumen-media/module-sdk/ui";
+import type { TextEditorRef } from "@lumen-media/module-sdk/ui";
 
 function IconX({ size = 16 }: { size?: number }) {
   return (
@@ -35,10 +36,23 @@ interface DrawnEntry {
   order: number;
 }
 
+function stripMarkdownLine(line: string): string {
+  return line
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/^[-*+]\s+/, "")
+    .replace(/^\d+\.\s+/, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/`(.+?)`/g, "$1")
+    .trim();
+}
+
 function parseNames(text: string, removeDuplicates: boolean): string[] {
   const names = text
     .split("\n")
-    .map((n) => n.trim())
+    .map(stripMarkdownLine)
     .filter((n) => n.length > 0);
   if (removeDuplicates) return [...new Set(names)];
   return names;
@@ -48,6 +62,7 @@ export function createDrawConfigurator(host: LumenHost) {
   return function DrawConfiguratorPanel(rawProps: unknown) {
     const { close } = (rawProps ?? {}) as { close?: () => void };
 
+    const editorRef = useRef<TextEditorRef | null>(null);
     const [participants, setParticipants] = useState("");
     const [removeDuplicates, setRemoveDuplicates] = useState(true);
     const [doNotRepeat, setDoNotRepeat] = useState(true);
@@ -91,6 +106,9 @@ export function createDrawConfigurator(host: LumenHost) {
     const handleReset = async () => {
       setAlreadyDrawn([]);
       await host.data.json.set("alreadyDrawn", []);
+      editorRef.current?.setMarkdown("");
+      setParticipants("");
+      await host.data.json.set("participants", "");
     };
 
 const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
@@ -100,7 +118,6 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
     return (
       <div className="flex relative" style={{ width: 860, maxWidth: "95vw", maxHeight: "80vh" }}>
 
-        {/* Close button — top right corner */}
         {close && (
           <Button
             variant="ghost"
@@ -112,17 +129,14 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
           </Button>
         )}
 
-        {/* Left column */}
         <Card
           className="flex flex-col gap-5 p-4 overflow-y-auto border-none rounded-r-none"
           style={{ flex: 1, padding: 24, minWidth: 0 }}
         >
-          {/* Header */}
           <div style={{ paddingRight: 32 }}>
             <h2 className="text-lg leading-none font-bold m-0">Draw Configurator</h2>
           </div>
 
-          {/* Toggles */}
           <div className="flex flex-col gap-3 bg-secondary rounded-lg" style={{ padding: "14px 18px" }}>
             <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
               <Switch
@@ -146,25 +160,25 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
             </Label>
           </div>
 
-          {/* Participants */}
           <div className="flex flex-col gap-2" style={{ flex: 1 }}>
             <Label className="text-muted-foreground">Participants (one per line)</Label>
-            <Textarea
-              value={participants}
-              onChange={async (e: { target: { value: string } }) => {
-                setParticipants(e.target.value);
-                await host.data.json.set("participants", e.target.value);
-              }}
+            <TextEditor
+              ref={editorRef}
+              defaultValue={participants}
               placeholder="One name per line..."
-              style={{ minHeight: 200, resize: "vertical" }}
-              className="bg-secondary border-none"
+              debounce={300}
+              onChange={async (md: string) => {
+                setParticipants(md);
+                await host.data.json.set("participants", md);
+              }}
+              style={{ minHeight: 200 }}
+              className="bg-secondary border-none rounded-lg"
             />
             <p className="text-xs text-muted-foreground m-0">
               Paste or type names. Duplicates and repeats will be handled by the settings above.
             </p>
           </div>
 
-          {/* Bottom bar */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               Ready to draw from {eligible.length} name{eligible.length !== 1 ? "s" : ""}
@@ -182,7 +196,6 @@ const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
 
         <Separator orientation="vertical" />
 
-        {/* Right column — Already Drawn */}
         <Card
           className="flex flex-col gap-3 p-4 border-none rounded-l-none bg-secondary"
           style={{ width: 280, padding: 24 }}
