@@ -2,6 +2,34 @@ import { useState, useEffect } from "react";
 import type { LumenHost } from "@lumen-media/module-sdk";
 import { Badge, Button, Card, Label, ScrollArea, Separator, Switch, Textarea } from "@lumen-media/module-sdk/ui";
 
+function IconX({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+    </svg>
+  );
+}
+
+function IconShuffle({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m18 14 3 3-3 3"/><path d="m18 4 3 3-3 3"/>
+      <path d="M3 7h3a5 5 0 0 1 5 5 5 5 0 0 0 5 5h4"/>
+      <path d="M3 17h3a5 5 0 0 0 5-5 5 5 0 0 1 5-5h4"/>
+    </svg>
+  );
+}
+
+
+function IconRotateCcw({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+      <path d="M3 3v5h5"/>
+    </svg>
+  );
+}
+
 interface DrawnEntry {
   name: string;
   order: number;
@@ -65,42 +93,38 @@ export function createDrawConfigurator(host: LumenHost) {
       await host.data.json.set("alreadyDrawn", []);
     };
 
-    const handlePreview = () => {
-      if (eligible.length === 0) {
-        host.ui.notify({ message: "Pool is empty — no names to draw.", level: "info" });
-        return;
-      }
-      host.ui.notify({
-        title: `${eligible.length} eligible name${eligible.length !== 1 ? "s" : ""}`,
-        message: eligible.join(", "),
-      });
-    };
-
-    const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
+const sortedDrawn = [...alreadyDrawn].sort((a, b) => b.order - a.order);
 
     if (!loaded) return null;
 
     return (
-      <div className="flex" style={{ width: 860, maxWidth: "95vw", maxHeight: "80vh" }}>
+      <div className="flex relative" style={{ width: 860, maxWidth: "95vw", maxHeight: "80vh" }}>
+
+        {/* Close button — top right corner */}
+        {close && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={close}
+            style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}
+          >
+            <IconX size={16} />
+          </Button>
+        )}
 
         {/* Left column */}
         <Card
-          className="flex flex-col gap-5 overflow-y-auto border-none rounded-r-none"
+          className="flex flex-col gap-5 p-4 overflow-y-auto border-none rounded-r-none"
           style={{ flex: 1, padding: 24, minWidth: 0 }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold m-0">Draw Configurator</h2>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={close}>✕ Close</Button>
-              <Button onClick={handleDraw}>🔀 Draw</Button>
-            </div>
+          <div style={{ paddingRight: 32 }}>
+            <h2 className="text-lg leading-none font-bold m-0">Draw Configurator</h2>
           </div>
 
           {/* Toggles */}
           <div className="flex flex-col gap-3 bg-secondary rounded-lg" style={{ padding: "14px 18px" }}>
-           
-              <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
+            <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
               <Switch
                 id="remove-duplicates"
                 checked={removeDuplicates}
@@ -109,10 +133,8 @@ export function createDrawConfigurator(host: LumenHost) {
                   await host.data.json.set("removeDuplicates", v);
                 }}
               />
-              </Label>
-           
-            
-              <Label className="flex items-center justify-between" htmlFor="do-not-repeat">Do not repeat names
+            </Label>
+            <Label className="flex items-center justify-between" htmlFor="do-not-repeat">Do not repeat names
               <Switch
                 id="do-not-repeat"
                 checked={doNotRepeat}
@@ -121,8 +143,7 @@ export function createDrawConfigurator(host: LumenHost) {
                   await host.data.json.set("doNotRepeat", v);
                 }}
               />
-              </Label>
-           
+            </Label>
           </div>
 
           {/* Participants */}
@@ -136,6 +157,7 @@ export function createDrawConfigurator(host: LumenHost) {
               }}
               placeholder="One name per line..."
               style={{ minHeight: 200, resize: "vertical" }}
+              className="bg-secondary border-none"
             />
             <p className="text-xs text-muted-foreground m-0">
               Paste or type names. Duplicates and repeats will be handled by the settings above.
@@ -148,8 +170,12 @@ export function createDrawConfigurator(host: LumenHost) {
               Ready to draw from {eligible.length} name{eligible.length !== 1 ? "s" : ""}
             </span>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleReset}>↺ Reset</Button>
-              <Button onClick={handlePreview}>👁 Preview</Button>
+              <Button size="default" variant="outline" onClick={handleReset} className="flex items-center gap-2">
+                <IconRotateCcw size={16} /> Reset
+              </Button>
+              <Button size="default" onClick={handleDraw} className="flex items-center gap-2">
+                <IconShuffle size={16} /> Draw
+              </Button>
             </div>
           </div>
         </Card>
@@ -158,16 +184,16 @@ export function createDrawConfigurator(host: LumenHost) {
 
         {/* Right column — Already Drawn */}
         <Card
-          className="flex flex-col gap-3 bg-transparent border-none rounded-l-none"
+          className="flex flex-col gap-3 p-4 border-none rounded-l-none bg-secondary"
           style={{ width: 280, padding: 24 }}
         >
-          <h3 className="text-base font-bold m-0">Already Drawn</h3>
+          <h3 className="text-base leading-none font-bold m-0">Already Drawn</h3>
           <ScrollArea style={{ flex: 1 }}>
             <div className="flex flex-col gap-2">
               {sortedDrawn.map((entry) => (
                 <div
                   key={entry.order}
-                  className="flex items-center justify-between bg-secondary rounded-lg"
+                  className="flex items-center justify-between bg-card rounded-lg"
                   style={{ padding: "10px 14px" }}
                 >
                   <span className="text-sm">{entry.name}</span>
