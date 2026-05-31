@@ -85,7 +85,7 @@ export function createDrawConfigurator(host: LumenHost) {
 
         {/* Left column */}
         <Card
-          className="flex flex-col gap-5 overflow-y-auto rounded-r-none"
+          className="flex flex-col gap-5 overflow-y-auto border-none rounded-r-none"
           style={{ flex: 1, padding: 24, minWidth: 0 }}
         >
           {/* Header */}
@@ -158,7 +158,7 @@ export function createDrawConfigurator(host: LumenHost) {
 
         {/* Right column — Already Drawn */}
         <Card
-          className="flex flex-col gap-3 bg-transparent rounded-l-none"
+          className="flex flex-col gap-3 bg-transparent border-none rounded-l-none"
           style={{ width: 280, padding: 24 }}
         >
           <h3 className="text-base font-bold m-0">Already Drawn</h3>
@@ -167,7 +167,7 @@ export function createDrawConfigurator(host: LumenHost) {
               {sortedDrawn.map((entry) => (
                 <div
                   key={entry.order}
-                  className="flex items-center justify-between bg-secondary border border-border rounded-lg"
+                  className="flex items-center justify-between bg-secondary rounded-lg"
                   style={{ padding: "10px 14px" }}
                 >
                   <span className="text-sm">{entry.name}</span>
