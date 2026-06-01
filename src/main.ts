@@ -1,8 +1,9 @@
 import css from "./styles.css?inline";
 import { type LumenHost, LumenPlugin } from "@lumen-media/module-sdk";
-import { createDrawConfigurator } from "./DrawConfigurator.js";
+import { createRaffleConfigurator } from "./RaffleConfigurator.js";
+import { createRaffleScreen } from "./RaffleScreen.js";
 
-export default class DrawModulePlugin extends LumenPlugin {
+export default class RaffleModulePlugin extends LumenPlugin {
   private styleEl: HTMLStyleElement | null = null;
 
   async onload(host: LumenHost): Promise<void> {
@@ -11,20 +12,26 @@ export default class DrawModulePlugin extends LumenPlugin {
     this.styleEl.textContent = css;
     document.head.appendChild(this.styleEl);
 
-    const DrawPanel = createDrawConfigurator(host);
-
     host.panels.add({
-      id: "draw-module.configurator",
-      slot: "dialog",
-      component: DrawPanel,
+      id: "raffle-module.raffle-screen",
+      slot: "presenter.content",
+      component: createRaffleScreen(),
     });
 
-    host.menus.addItem("tools", {
-      type: "action",
-      id: "draw-module.open",
-      label: "Draw",
-      onClick: () => host.ui.openDialog("draw-module.configurator"),
-    });
+    if (host.window === "main") {
+      host.panels.add({
+        id: "raffle-module.raffle-configurator",
+        slot: "dialog",
+        component: createRaffleConfigurator(host),
+      });
+
+      host.menus.addItem("tools", {
+        type: "action",
+        id: "raffle-module.open",
+        label: "Raffle",
+        onClick: () => host.ui.openDialog("raffle-module.raffle-configurator"),
+      });
+    }
   }
 
   async onunload(): Promise<void> {
