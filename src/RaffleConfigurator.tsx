@@ -121,9 +121,21 @@ export function createRaffleConfigurator(host: LumenHost) {
       return removeDuplicates ? [...new Set(clean)] : clean;
     })();
 
+    useEffect(() => {
+      const d = host.presentation.onStateChange((state) => {
+        if (state === "idle") setStarted(false);
+      });
+      return () => d.dispose();
+    }, []);
+
     const handleStart = () => {
       host.presentation.project("raffle-module.raffle-screen", { name: null, animationKey: 0 });
       setStarted(true);
+    };
+
+    const handleExit = () => {
+      host.presentation.clear();
+      setStarted(false);
     };
 
     const handleRaffle = async () => {
@@ -225,9 +237,15 @@ export function createRaffleConfigurator(host: LumenHost) {
               Ready to raffle from {eligible.length} name{eligible.length !== 1 ? "s" : ""}
             </span>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
-                <IconRotateCcw size={16} /> Reset
-              </Button>
+              {started ? (
+                <Button variant="outline" onClick={handleExit} className="flex items-center gap-2">
+                  <IconX size={16} /> Exit
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
+                  <IconRotateCcw size={16} /> Reset
+                </Button>
+              )}
               {started ? (
                 <Button onClick={handleRaffle} className="flex items-center gap-2">
                   <IconShuffle size={16} /> Raffle

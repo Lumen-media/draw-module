@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "lumen-module build",
-    "pack": "lumen-module pack",
+    "pack": "lumen-module build && lumen-module pack",
     "validate": "lumen-module validate"
   },
   "dependencies": {

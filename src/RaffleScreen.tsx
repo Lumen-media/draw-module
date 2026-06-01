@@ -1,54 +1,122 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const rand = () => LETTERS[Math.floor(Math.random() * 26)];
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
+
+const FACES = 4;
+const FACE_DEG = 360 / FACES;
+const RADIUS = 40;
+const PERSPECTIVE = 260;
 
 interface TileProps {
   char: string;
   index: number;
+  onDone: () => void;
 }
 
-function LetterTile({ char, index }: TileProps) {
-  const [top, setTop] = useState(rand);
-  const [mid, setMid] = useState(rand);
-  const [bot, setBot] = useState(rand);
-  const [done, setDone] = useState(false);
+function LetterTile({ char, index, onDone }: TileProps) {
+  const [rot, setRot] = useState(0);
+  const [faceLetters, setFaceLetters] = useState<string[]>(() =>
+    Array.from({ length: FACES }, rand)
+  );
+  const rafRef = useRef(0);
+  const startRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const SPIN_DURATION = 1400;
-    let elapsed = 0;
-    let timerId: ReturnType<typeof setTimeout>;
 
-    const cycle = () => {
-      if (elapsed >= SPIN_DURATION) {
-        setMid(char.toUpperCase());
-        setTop(rand());
-        setBot(rand());
-        setDone(true);
-        return;
+    setRot(0);
+    setFaceLetters(Array.from({ length: FACES }, rand));
+    startRef.current = null;
+
+    const fullSpins = 4 + Math.floor(Math.random() * 3);
+    const totalDeg = fullSpins * 360;
+    const duration = 1600;
+    const stagger = index * 90;
+
+    let lastFacePassed = -1;
+
+    const frame = (ts: number) => {
+      if (!startRef.current) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const deg = eased * totalDeg;
+
+      setRot(deg);
+
+      const faceNow = Math.floor(deg / FACE_DEG) % FACES;
+      if (faceNow !== lastFacePassed && t < 0.88) {
+        lastFacePassed = faceNow;
+        setFaceLetters(prev => {
+          const next = [...prev];
+          next[(faceNow + Math.floor(FACES / 2)) % FACES] = rand();
+          return next;
+        });
       }
-      setTop(rand());
-      setMid(rand());
-      setBot(rand());
-      const progress = elapsed / SPIN_DURATION;
-      const interval = Math.floor(50 + progress * 180);
-      elapsed += interval;
-      timerId = setTimeout(cycle, interval);
+
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(frame);
+      } else {
+        setFaceLetters(prev => {
+          const next = [...prev];
+          next[0] = char.toUpperCase();
+          return next;
+        });
+        setRot(totalDeg);
+        onDone();
+      }
     };
 
-    timerId = setTimeout(cycle, 90 * index);
-    return () => clearTimeout(timerId);
+    const tid = setTimeout(() => {
+      rafRef.current = requestAnimationFrame(frame);
+    }, stagger);
+
+    return () => {
+      clearTimeout(tid);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, [char, index]);
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-xs font-bold leading-none text-foreground/20">{top}</span>
-      <div className={`w-16 h-20 flex items-center justify-center rounded-xl bg-card border transition-colors ${done ? "border-primary/40" : "border-foreground/5"}`}>
-        <span className={`text-5xl font-extrabold leading-none transition-colors ${done ? "text-foreground" : "text-foreground/60"}`}>
-          {mid}
-        </span>
+    <div style={{ perspective: PERSPECTIVE, width: 64, height: 80 }}>
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          transformStyle: "preserve-3d",
+          transform: `rotateX(${rot}deg)`,
+          position: "relative",
+        }}
+      >
+        {faceLetters.map((letter, fi) => (
+          <div
+            key={fi}
+            style={{
+              position: "absolute",
+              inset: 0,
+              backfaceVisibility: "hidden",
+              transform: `rotateX(${-fi * FACE_DEG}deg) translateZ(${RADIUS}px)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 12,
+              background: "oklch(17% 0.035 265)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 40,
+                fontWeight: 800,
+                lineHeight: 1,
+                color: "white",
+              }}
+            >
+              {letter}
+            </span>
+          </div>
+        ))}
       </div>
-      <span className="text-xs font-bold leading-none text-foreground/20">{bot}</span>
     </div>
   );
 }
@@ -69,6 +137,15 @@ export function createRaffleScreen() {
       word.split("").forEach((char) => tiles.push({ word: wi, char, idx: g++ }));
     });
 
+    const [doneTiles, setDoneTiles] = useState(0);
+    const allDone = tiles.length > 0 && doneTiles >= tiles.length;
+
+    useEffect(() => {
+      setDoneTiles(0);
+    }, [animationKey]);
+
+    const handleTileDone = () => setDoneTiles((n) => n + 1);
+
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-10 bg-background">
         <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
@@ -84,11 +161,16 @@ export function createRaffleScreen() {
                     <div className="w-2 h-2 rounded-full bg-foreground/20" />
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-5">
                   {tiles
                     .filter((t) => t.word === wi)
                     .map((t) => (
-                      <LetterTile key={`${animationKey}-${t.idx}`} char={t.char} index={t.idx} />
+                      <LetterTile
+                        key={`${animationKey}-${t.idx}`}
+                        char={t.char}
+                        index={t.idx}
+                        onDone={handleTileDone}
+                      />
                     ))}
                 </div>
               </div>
@@ -96,10 +178,10 @@ export function createRaffleScreen() {
           </div>
         )}
 
-        {name && (
+        {allDone && name && (
           <div className="flex flex-col items-center gap-2">
             <p className="text-7xl font-bold text-primary">{name}</p>
-            <p className="text-sm text-muted-foreground">Congratulations!</p>
+            <p className="text-sm text-muted-foreground">🎉 Congratulations!</p>
           </div>
         )}
       </div>

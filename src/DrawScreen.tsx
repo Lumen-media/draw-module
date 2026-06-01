@@ -84,7 +84,7 @@ export function createRaffleScreen() {
                     <div className="w-2 h-2 rounded-full bg-foreground/20" />
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-5">
                   {tiles
                     .filter((t) => t.word === wi)
                     .map((t) => (
@@ -97,7 +97,7 @@ export function createRaffleScreen() {
         )}
 
         {name && (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-5">
             <p className="text-7xl font-bold text-primary">{name}</p>
             <p className="text-sm text-muted-foreground">Congratulations!</p>
           </div>
