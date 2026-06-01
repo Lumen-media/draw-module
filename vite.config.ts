@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/postcss";
 import { defineConfig } from "vite";
@@ -15,9 +15,18 @@ export default defineConfig({
     {
       name: "lumen-module-assets",
       closeBundle() {
-        const out = resolve(process.cwd(), "dist");
+        const cwd = process.cwd();
+        const out = resolve(cwd, "dist");
         mkdirSync(out, { recursive: true });
-        copyFileSync(resolve(process.cwd(), "manifest.json"), resolve(out, "manifest.json"));
+
+        const manifest = JSON.parse(readFileSync(resolve(cwd, "manifest.json"), "utf8"));
+        const pkgPath = resolve(cwd, "package.json");
+        if (existsSync(pkgPath)) {
+          const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+          if (pkg.version) manifest.version = pkg.version;
+          if (pkg.description) manifest.description = pkg.description;
+        }
+        writeFileSync(resolve(out, "manifest.json"), JSON.stringify(manifest, null, 2));
       },
     },
   ],

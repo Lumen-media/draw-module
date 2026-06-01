@@ -1,22 +1,26 @@
 {
   "name": "raffle-module",
-  "version": "0.2.0",
+  "description": "A raffle module",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "lumen-module build",
     "pack": "lumen-module build && lumen-module pack",
-    "validate": "lumen-module validate"
+    "validate": "lumen-module validate",
+    "sync-manifest": "node scripts/sync-manifest.js",
+    "version": "pnpm run sync-manifest && git add manifest.json"
   },
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@lumen-media/module-cli": "^0.0.1",
-    "@lumen-media/module-sdk": "^0.1.0",
+    "@lumen-media/module-cli": "^0.3.0",
+    "@lumen-media/module-sdk": "^0.3.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.1.11",
