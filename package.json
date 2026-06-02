@@ -1,7 +1,7 @@
 {
   "name": "raffle-module",
   "description": "A raffle module",
-  "version": "0.6.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "scripts": {

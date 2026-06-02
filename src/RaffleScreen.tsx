@@ -5,8 +5,150 @@ import { Wheel } from "react-custom-roulette";
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
 
+const DEFAULT_WHEEL_COLORS = ["#36c5f0", "#2aa8d8", "#57d6f6", "#168bb7", "#8be5fb"];
+
 const FACES = 4;
 const FACE_DEG = 360 / FACES;
+
+interface RgbColor {
+  r: number;
+  g: number;
+  b: number;
+}
+
+interface HslColor {
+  h: number;
+  s: number;
+  l: number;
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+function linearToSrgb(value: number) {
+  return value >= 0.0031308
+    ? 1.055 * Math.pow(value, 1 / 2.4) - 0.055
+    : 12.92 * value;
+}
+
+function oklchToRgb(l: number, c: number, h: number): RgbColor {
+  const hue = (h * Math.PI) / 180;
+  const a = Math.cos(hue) * c;
+  const b = Math.sin(hue) * c;
+
+  const lPrime = l + 0.3963377774 * a + 0.2158037573 * b;
+  const mPrime = l - 0.1055613458 * a - 0.0638541728 * b;
+  const sPrime = l - 0.0894841775 * a - 1.291485548 * b;
+
+  const l3 = lPrime ** 3;
+  const m3 = mPrime ** 3;
+  const s3 = sPrime ** 3;
+
+  return {
+    r: Math.round(clamp(linearToSrgb(4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3), 0, 1) * 255),
+    g: Math.round(clamp(linearToSrgb(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3), 0, 1) * 255),
+    b: Math.round(clamp(linearToSrgb(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3), 0, 1) * 255),
+  };
+}
+
+function parseOklch(color: string): RgbColor | null {
+  const match = color.match(/oklch\(\s*([\d.]+%?)\s+([\d.]+%?)\s+([\d.]+)/i);
+  if (!match) return null;
+
+  const l = match[1].endsWith("%") ? Number.parseFloat(match[1]) / 100 : Number.parseFloat(match[1]);
+  const c = match[2].endsWith("%") ? Number.parseFloat(match[2]) / 100 : Number.parseFloat(match[2]);
+  const h = Number.parseFloat(match[3]);
+
+  if (![l, c, h].every(Number.isFinite)) return null;
+  return oklchToRgb(l, c, h);
+}
+
+function parseRgb(color: string): RgbColor | null {
+  const match = color.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+  if (!match) return null;
+
+  return {
+    r: clamp(Math.round(Number.parseFloat(match[1])), 0, 255),
+    g: clamp(Math.round(Number.parseFloat(match[2])), 0, 255),
+    b: clamp(Math.round(Number.parseFloat(match[3])), 0, 255),
+  };
+}
+
+function rgbToHsl({ r, g, b }: RgbColor): HslColor {
+  const r1 = r / 255;
+  const g1 = g / 255;
+  const b1 = b / 255;
+  const max = Math.max(r1, g1, b1);
+  const min = Math.min(r1, g1, b1);
+  const delta = max - min;
+  const l = (max + min) / 2;
+
+  if (delta === 0) return { h: 0, s: 0, l };
+
+  const s = delta / (1 - Math.abs(2 * l - 1));
+  const h = max === r1
+    ? 60 * (((g1 - b1) / delta) % 6)
+    : max === g1
+      ? 60 * ((b1 - r1) / delta + 2)
+      : 60 * ((r1 - g1) / delta + 4);
+
+  return { h: (h + 360) % 360, s, l };
+}
+
+function hslToRgb({ h, s, l }: HslColor): RgbColor {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r1, g1, b1] = h < 60 ? [c, x, 0]
+    : h < 120 ? [x, c, 0]
+      : h < 180 ? [0, c, x]
+        : h < 240 ? [0, x, c]
+          : h < 300 ? [x, 0, c]
+            : [c, 0, x];
+
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255),
+  };
+}
+
+function rgbToHex({ r, g, b }: RgbColor) {
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function getCssVariableColor(name: string): RgbColor | null {
+  if (typeof document === "undefined") return null;
+
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const parsed = parseOklch(value) ?? parseRgb(value);
+  if (parsed) return parsed;
+
+  const probe = document.createElement("span");
+  probe.style.color = `var(${name})`;
+  document.body.appendChild(probe);
+  const normalized = getComputedStyle(probe).color;
+  probe.remove();
+
+  return parseRgb(normalized);
+}
+
+function createWheelPalette(primary: RgbColor | null) {
+  if (!primary) return DEFAULT_WHEEL_COLORS;
+
+  const base = rgbToHsl(primary);
+  const offsets = [0, 18, -18, 36, -36, 54, -54, 72];
+  return offsets.map((offset, index) => rgbToHex(hslToRgb({
+    h: (base.h + offset + 360) % 360,
+    s: clamp(base.s * (index % 2 === 0 ? 1 : 0.86), 0.45, 0.9),
+    l: clamp(base.l + (index % 3 - 1) * 0.08, 0.32, 0.68),
+  })));
+}
+
+function getContrastText({ r, g, b }: RgbColor) {
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.58 ? "#07111f" : "#ffffff";
+}
+
 
 interface TileProps {
   char: string;
@@ -169,7 +311,7 @@ function NamePicker({ names, prizeIndex, animationKey, duration, fontSize, fontF
   }, [animationKey, prizeIndex]);
 
   return (
-    <Card className="shadow-2xl bg-card">
+    <Card className="shadow-2xl bg-card p-8">
       <div style={{ width: cardW, height: itemH, overflow: "hidden" }}>
         <div style={{ transform: `translateY(${translateY}px)`, willChange: "transform" }}>
           {fullList.map((name, i) => (
@@ -246,6 +388,8 @@ export function createRaffleScreen() {
 
     const [mustSpin, setMustSpin] = useState(false);
     const [wheelDone, setWheelDone] = useState(false);
+    const [wheelColors, setWheelColors] = useState(DEFAULT_WHEEL_COLORS);
+    const [wheelTextColor, setWheelTextColor] = useState("#ffffff");
 
     useEffect(() => {
       setDoneTiles(0);
@@ -255,6 +399,22 @@ export function createRaffleScreen() {
       }
     }, [animationKey]);
 
+    useEffect(() => {
+      const updateWheelTheme = () => {
+        const primary = getCssVariableColor("--primary");
+        const primaryForeground = getCssVariableColor("--primary-foreground");
+        setWheelColors(createWheelPalette(primary));
+        setWheelTextColor(primaryForeground ? rgbToHex(primaryForeground) : getContrastText(primary ?? { r: 54, g: 197, b: 240 }));
+      };
+
+      updateWheelTheme();
+
+      if (typeof MutationObserver === "undefined") return;
+      const observer = new MutationObserver(updateWheelTheme);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style"] });
+      return () => observer.disconnect();
+    }, []);
+
     const handleTileDone = () => setDoneTiles((n) => n + 1);
 
     const wheelData = participants.length >= 2
@@ -262,13 +422,26 @@ export function createRaffleScreen() {
       : [{ option: "?" }, { option: "?" }];
 
     const isCard = background === "card";
+    const longestSlotNameLength = Math.max(
+      name?.length ?? 0,
+      ...participants.map((participant) => participant.length),
+      6
+    );
+    const slotPlaceholderWidth = Math.min(
+      920,
+      Math.max(620, Math.round(longestSlotNameLength * fontSize * 1.18))
+    );
+    const slotPlaceholderHeight = Math.round(fontSize * 1.8);
 
     const tilesContent = words.length > 0 && (
       <div className="flex items-center">
         {words.map((_, wi) => (
           <div key={wi} className="flex items-center">
             {wi > 0 && (
-              <div className="flex items-center justify-center w-10">
+              <div
+                className="flex items-center justify-center"
+                style={{ width: Math.round(fontSize * 0.9) }}
+              >
                 <div className="w-2 h-2 rounded-full bg-white/20" />
               </div>
             )}
@@ -337,8 +510,8 @@ export function createRaffleScreen() {
             prizeNumber={prizeIndex >= 0 ? prizeIndex : 0}
             data={wheelData}
             onStopSpinning={() => { setMustSpin(false); setWheelDone(true); }}
-            backgroundColors={["#1e1b4b", "#312e81", "#4338ca", "#6d28d9", "#7c3aed"]}
-            textColors={["#ffffff"]}
+            backgroundColors={wheelColors}
+            textColors={[wheelTextColor]}
             outerBorderColor="rgba(255,255,255,0.1)"
             outerBorderWidth={2}
             innerRadius={0}
@@ -369,17 +542,30 @@ export function createRaffleScreen() {
           Current Raffle
         </p>
 
-        {isCard ? (
-          <div
-            className="flex flex-col items-center rounded-[20px] bg-background"
-            style={{ padding: "28px 40px", boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" }}
+        {animType === "slots" || isCard ? (
+          <Card
+            className="flex flex-col items-center shadow-2xl bg-card"
+            style={{
+              padding: "40px 56px",
+              minWidth: slotPlaceholderWidth,
+              minHeight: slotPlaceholderHeight + 80,
+            }}
           >
-            {tilesContent}
-          </div>
+            {tilesContent ?? (
+              <div
+                aria-hidden="true"
+                style={{
+                  width: slotPlaceholderWidth,
+                  height: slotPlaceholderHeight,
+                  opacity: 0,
+                }}
+              />
+            )}
+          </Card>
         ) : tilesContent}
 
         <p
-          className="text-xl text-muted-foreground transition-opacity duration-400"
+          className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
           style={{ opacity: allDone && name ? 1 : 0 }}
         >
           🎉 Congratulations!
