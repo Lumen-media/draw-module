@@ -80,7 +80,7 @@ interface RaffleSettings {
 
 const DEFAULT_SETTINGS: RaffleSettings = {
   background: "default",
-  fontSize: 72,
+  fontSize: 48,
   fontFamily: "",
   animType: "roulette",
   animDuration: 1600,
@@ -352,7 +352,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                               {activeList ? (
                                 <span className="flex items-center justify-between w-full gap-2 truncate">
                                   <span className="truncate">{activeList.name}</span>
-                                  <Badge className="text-xs shrink-0">{countNames(activeList.participants)} names</Badge>
+                                  <Badge className="text-xs shrink-0 bg-primary/60">{countNames(activeList.participants)} names</Badge>
                                 </span>
                               ) : undefined}
                             </Select.SelectValue>

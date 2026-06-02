@@ -5,17 +5,20 @@ const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
 
 const FACES = 4;
 const FACE_DEG = 360 / FACES;
-const RADIUS = 40;
-const PERSPECTIVE = 240;
 
 interface TileProps {
   char: string;
   index: number;
   onDone: () => void;
   duration: number;
+  fontSize: number;
 }
 
-function LetterTile({ char, index, onDone, duration }: TileProps) {
+function LetterTile({ char, index, onDone, duration, fontSize }: TileProps) {
+  const tileW = Math.round(fontSize * 1.4);
+  const tileH = Math.round(fontSize * 1.8);
+  const radius = Math.round(tileH / 2);
+  const perspective = tileH * 3;
   const [faceLetters, setFaceLetters] = useState<string[]>(() =>
     Array.from({ length: FACES }, rand)
   );
@@ -86,7 +89,7 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
   }, [char, index, duration]);
 
   return (
-    <div className="w-16 h-20" style={{ perspective: PERSPECTIVE }}>
+    <div style={{ width: tileW, height: tileH, perspective }}>
       <div
         ref={drumRef}
         className="w-full h-full relative transform-3d"
@@ -98,10 +101,10 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
             className="absolute inset-0 flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
             style={{
               backfaceVisibility: "hidden",
-              transform: `rotateX(${-fi * FACE_DEG}deg) translateZ(${RADIUS}px)`,
+              transform: `rotateX(${-fi * FACE_DEG}deg) translateZ(${radius}px)`,
             }}
           >
-            <span className="text-[2.5rem] font-extrabold leading-none text-white">
+            <span style={{ fontSize, fontWeight: 800, lineHeight: 1, color: "white" }}>
               {letter}
             </span>
           </div>
@@ -135,6 +138,7 @@ export function createRaffleScreen() {
       animationKey = 0,
       background = "default",
       backgroundMedia,
+      fontSize = 48,
       fontFamily = "",
       animType = "roulette",
       animDuration = 1600,
@@ -168,27 +172,33 @@ export function createRaffleScreen() {
                 <div className="w-2 h-2 rounded-full bg-white/20" />
               </div>
             )}
-            <div style={{ display: "flex", gap: 16 }}>
+            <div style={{ display: "flex", gap: Math.round(fontSize * 0.35) }}>
               {tiles
                 .filter((t) => t.word === wi)
                 .map((t) => (
-                  animType === "none" ? (
-                    <div
-                      key={`${animationKey}-${t.idx}`}
-                      className="w-16 h-20 flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
-                      onLoad={() => handleTileDone()}
-                    >
-                      <span className="text-[2.5rem] font-extrabold leading-none text-white">
-                        {t.char.toUpperCase()}
-                      </span>
-                    </div>
-                  ) : (
+                  animType === "none" ? (() => {
+                    const tileW = Math.round(fontSize * 1.4);
+                    const tileH = Math.round(fontSize * 1.8);
+                    return (
+                      <div
+                        key={`${animationKey}-${t.idx}`}
+                        style={{ width: tileW, height: tileH }}
+                        className="flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
+                        onLoad={() => handleTileDone()}
+                      >
+                        <span style={{ fontSize, fontWeight: 800, lineHeight: 1, color: "white" }}>
+                          {t.char.toUpperCase()}
+                        </span>
+                      </div>
+                    );
+                  })() : (
                     <LetterTile
                       key={`${animationKey}-${t.idx}`}
                       char={t.char}
                       index={t.idx}
                       onDone={handleTileDone}
                       duration={animDuration}
+                      fontSize={fontSize}
                     />
                   )
                 ))}
