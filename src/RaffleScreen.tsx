@@ -111,11 +111,17 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
   );
 }
 
+interface RaffleScreenBackground {
+  type: "theme" | "image" | "video";
+  src: string;
+  name: string;
+}
+
 interface RaffleScreenProps {
   name?: string | null;
   animationKey?: number;
-  background?: "solid" | "transparent" | "card";
-  backgroundColor?: string;
+  background?: "default" | "transparent" | "card" | "media";
+  backgroundMedia?: RaffleScreenBackground;
   fontSize?: number;
   fontFamily?: string;
   animType?: "roulette" | "none";
@@ -127,8 +133,8 @@ export function createRaffleScreen() {
     const {
       name,
       animationKey = 0,
-      background = "solid",
-      backgroundColor = "var(--color-background)",
+      background = "default",
+      backgroundMedia,
       fontFamily = "",
       animType = "roulette",
       animDuration = 1600,
@@ -152,7 +158,6 @@ export function createRaffleScreen() {
     const handleTileDone = () => setDoneTiles((n) => n + 1);
 
     const isCard = background === "card";
-    const isTransparent = background === "transparent";
 
     const tilesContent = words.length > 0 && (
       <div className="flex items-center">
@@ -195,13 +200,13 @@ export function createRaffleScreen() {
 
     return (
       <div
-        className="w-full h-full flex flex-col items-center justify-center gap-8"
+        className="w-full h-full relative flex flex-col items-center justify-center gap-8"
         style={{
           fontFamily: fontFamily || undefined,
-          backgroundColor: isCard || isTransparent ? undefined : backgroundColor,
+          backgroundColor: undefined,
         }}
       >
-        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
+        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
           Current Raffle
         </p>
 

@@ -50,13 +50,6 @@ function IconSettings2({ size = 16 }: { size?: number }) {
   );
 }
 
-function IconPlus({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 12h14" /><path d="M12 5v14" />
-    </svg>
-  );
-}
 
 
 interface RaffledEntry {
@@ -70,20 +63,23 @@ interface RaffleList {
   participants: string;
 }
 
+interface SelectedBackground {
+  type: "theme" | "image" | "video";
+  src: string;
+  name: string;
+}
+
 interface RaffleSettings {
-  background: "solid" | "transparent" | "card";
-  backgroundColor: string;
+  background: "default" | "transparent" | "card" | "media";
+  backgroundMedia?: SelectedBackground;
   fontSize: number;
   fontFamily: string;
   animType: "roulette" | "none";
   animDuration: number;
 }
 
-const PRESET_COLORS = ["var(--color-primary)", "#0f172a", "#1e293b", "#374151"];
-
 const DEFAULT_SETTINGS: RaffleSettings = {
-  background: "solid",
-  backgroundColor: "var(--color-background)",
+  background: "default",
   fontSize: 72,
   fontFamily: "",
   animType: "roulette",
@@ -304,6 +300,7 @@ export function createRaffleConfigurator(host: LumenHost) {
 
     const sortedRaffled = [...alreadyRaffled].sort((a, b) => b.order - a.order);
     const activeList = lists.find((l) => l.id === activeListId);
+    const countNames = (text: string) => parseNames(text, false).filter(n => !n.startsWith("*")).length;
     const fontOptions = systemFonts.length > 0 ? systemFonts : [
       "Arial", "Georgia", "Impact", "Segoe UI", "Tahoma", "Times New Roman", "Verdana",
     ];
@@ -338,8 +335,8 @@ export function createRaffleConfigurator(host: LumenHost) {
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">List</span>
                       {creatingList ? (
                         <div className="flex gap-2">
-                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus className="flex-1 text-[13px]" />
-                          <Button size="sm" onClick={handleCreateList}>Save</Button>
+                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus className="flex-1 text-xs h-8" />
+                          <Button size="sm" className="h-auto" onClick={handleCreateList}>Save</Button>
                         </div>
                       ) : (
                         <Select
@@ -352,16 +349,24 @@ export function createRaffleConfigurator(host: LumenHost) {
                         >
                           <Select.SelectTrigger className="w-full text-sm">
                             <Select.SelectValue placeholder="Create list...">
-                              {activeListId
-                                ? (lists.find((l) => l.id === activeListId)?.name ?? activeListId)
-                                : undefined}
+                              {activeList ? (
+                                <span className="flex items-center justify-between w-full gap-2 truncate">
+                                  <span className="truncate">{activeList.name}</span>
+                                  <Badge className="text-xs shrink-0">{countNames(activeList.participants)} names</Badge>
+                                </span>
+                              ) : undefined}
                             </Select.SelectValue>
                           </Select.SelectTrigger>
                           <Select.SelectContent>
                             <ScrollArea>
                               {lists.length > 0 && <Select.SelectItem value="">No list</Select.SelectItem>}
                               {lists.map((l) => (
-                                <Select.SelectItem key={l.id} value={l.id}>{l.name}</Select.SelectItem>
+                                <Select.SelectItem key={l.id} value={l.id}>
+                                  <span className="flex items-center justify-between w-full gap-3">
+                                    <span className="truncate">{l.name}</span>
+                                    <span className="text-xs text-muted-foreground shrink-0">{countNames(l.participants)}</span>
+                                  </span>
+                                </Select.SelectItem>
                               ))}
                               {lists.length > 0 && <Select.SelectSeparator />}
                               <Select.SelectItem value="__create__">+ Create list</Select.SelectItem>
@@ -425,31 +430,34 @@ export function createRaffleConfigurator(host: LumenHost) {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 2 }}>Background</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Background</span>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Type</span>
                         <Select value={settings.background} onValueChange={(v) => saveSettings({ ...settings, background: v as RaffleSettings["background"] })}>
                           <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
                           <Select.SelectContent>
-                            <Select.SelectItem value="solid">Solid Color</Select.SelectItem>
+                            <Select.SelectItem value="default">Default (theme)</Select.SelectItem>
                             <Select.SelectItem value="transparent">Transparent</Select.SelectItem>
                             <Select.SelectItem value="card">Card</Select.SelectItem>
+                            <Select.SelectItem value="media">Image / Video</Select.SelectItem>
                           </Select.SelectContent>
                         </Select>
                       </div>
-                      {settings.background === "solid" && (
-                        <div className="flex gap-1.5" style={{ marginTop: 4 }}>
-                          {PRESET_COLORS.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => saveSettings({ ...settings, backgroundColor: c })}
-                              style={{ width: 28, height: 28, borderRadius: 6, background: c, border: settings.backgroundColor === c ? "2px solid var(--color-primary)" : "2px solid transparent", cursor: "pointer", flexShrink: 0 }}
-                            />
-                          ))}
-                          <button type="button" className="flex items-center justify-center text-muted-foreground" style={{ width: 28, height: 28, borderRadius: 6, border: "1.5px dashed var(--color-border)", background: "none", cursor: "pointer" }}>
-                            <IconPlus size={12} />
-                          </button>
+                      {settings.background === "media" && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground flex-1 truncate">
+                            {settings.backgroundMedia?.name ?? "None selected"}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => (host.ui as any).openBackgroundPicker((bg: SelectedBackground) => {
+                              saveSettings({ ...settings, background: "media", backgroundMedia: bg });
+                            })}
+                            className="text-xs shrink-0"
+                          >
+                            Choose
+                          </Button>
                         </div>
                       )}
                     </div>
