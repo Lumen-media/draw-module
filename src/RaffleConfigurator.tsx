@@ -74,7 +74,7 @@ interface RaffleSettings {
   backgroundMedia?: SelectedBackground;
   fontSize: number;
   fontFamily: string;
-  animType: "slots" | "wheel" | "none";
+  animType: "slots" | "wheel" | "picker";
   animDuration: number;
 }
 
@@ -422,7 +422,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                             <Select.SelectContent>
                               <Select.SelectItem value="slots">Slots</Select.SelectItem>
                               <Select.SelectItem value="wheel">Wheel</Select.SelectItem>
-                              <Select.SelectItem value="none">None</Select.SelectItem>
+                              <Select.SelectItem value="picker">Picker</Select.SelectItem>
                             </Select.SelectContent>
                           </Select>
                         )],

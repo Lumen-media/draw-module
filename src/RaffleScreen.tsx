@@ -1,3 +1,4 @@
+import { Card } from "@lumen-media/module-sdk/ui";
 import { useEffect, useRef, useState } from "react";
 import { Wheel } from "react-custom-roulette";
 
@@ -115,6 +116,89 @@ function LetterTile({ char, index, onDone, duration, fontSize }: TileProps) {
   );
 }
 
+const PICKER_REPEATS = 8;
+
+interface NamePickerProps {
+  names: string[];
+  prizeIndex: number;
+  animationKey: number;
+  duration: number;
+  fontSize: number;
+  fontFamily?: string;
+  onDone: () => void;
+}
+
+function NamePicker({ names, prizeIndex, animationKey, duration, fontSize, fontFamily, onDone }: NamePickerProps) {
+  const itemH = Math.round(fontSize * 1.2);
+  const cardW = Math.min(720, Math.max(400, fontSize * 9));
+  const fullList = Array.from({ length: PICKER_REPEATS }, () => names).flat();
+
+  const [translateY, setTranslateY] = useState(-(2 * names.length * itemH));
+  const rafRef = useRef(0);
+  const startRef = useRef<number | null>(null);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (names.length === 0) return;
+    doneRef.current = false;
+    startRef.current = null;
+
+    const startY = -(2 * names.length * itemH);
+    const endY = -(5 * names.length * itemH + prizeIndex * itemH);
+
+    setTranslateY(startY);
+    if (prizeIndex < 0 || animationKey === 0) return;
+
+    const frame = (ts: number) => {
+      if (doneRef.current) return;
+      if (!startRef.current) startRef.current = ts;
+      const t = Math.min((ts - startRef.current) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 4);
+      setTranslateY(startY + (endY - startY) * eased);
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(frame);
+      } else {
+        doneRef.current = true;
+        setTranslateY(endY);
+        onDone();
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(frame);
+    return () => { doneRef.current = true; cancelAnimationFrame(rafRef.current); };
+  }, [animationKey, prizeIndex]);
+
+  return (
+    <Card className="shadow-2xl bg-card">
+      <div style={{ width: cardW, height: itemH, overflow: "hidden" }}>
+        <div style={{ transform: `translateY(${translateY}px)`, willChange: "transform" }}>
+          {fullList.map((name, i) => (
+            <div
+              key={i}
+              style={{
+                height: itemH,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize,
+                fontWeight: 700,
+                lineHeight: 1,
+                color: "var(--color-card-foreground)",
+                fontFamily: fontFamily || undefined,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {name}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 interface RaffleScreenBackground {
   type: "theme" | "image" | "video";
   src: string;
@@ -128,7 +212,7 @@ interface RaffleScreenProps {
   backgroundMedia?: RaffleScreenBackground;
   fontSize?: number;
   fontFamily?: string;
-  animType?: "slots" | "wheel" | "none";
+  animType?: "slots" | "wheel" | "picker" | "none";
   animDuration?: number;
   participants?: string[];
   prizeIndex?: number;
@@ -143,7 +227,7 @@ export function createRaffleScreen() {
       backgroundMedia,
       fontSize = 48,
       fontFamily = "",
-      animType = "slots",
+      animType = "slots" as "slots" | "wheel" | "picker" | "none",
       animDuration = 1600,
       participants = [],
       prizeIndex = -1,
@@ -192,37 +276,52 @@ export function createRaffleScreen() {
               {tiles
                 .filter((t) => t.word === wi)
                 .map((t) => (
-                  animType === "none" ? (() => {
-                    const tileW = Math.round(fontSize * 1.4);
-                    const tileH = Math.round(fontSize * 1.8);
-                    return (
-                      <div
-                        key={`${animationKey}-${t.idx}`}
-                        style={{ width: tileW, height: tileH }}
-                        className="flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
-                        onLoad={() => handleTileDone()}
-                      >
-                        <span style={{ fontSize, fontWeight: 800, lineHeight: 1, color: "white" }}>
-                          {t.char.toUpperCase()}
-                        </span>
-                      </div>
-                    );
-                  })() : (
-                    <LetterTile
-                      key={`${animationKey}-${t.idx}`}
-                      char={t.char}
-                      index={t.idx}
-                      onDone={handleTileDone}
-                      duration={animDuration}
-                      fontSize={fontSize}
-                    />
-                  )
+                  <LetterTile
+                    key={`${animationKey}-${t.idx}`}
+                    char={t.char}
+                    index={t.idx}
+                    onDone={handleTileDone}
+                    duration={animDuration}
+                    fontSize={fontSize}
+                  />
                 ))}
             </div>
           </div>
         ))}
       </div>
     );
+
+    if (animType === "picker") {
+      const hasActivePickerRaffle = animationKey > 0 && prizeIndex >= 0 && participants.length >= 1;
+
+      return (
+        <div
+          className="w-full h-full relative flex flex-col items-center justify-center gap-6"
+          style={{ fontFamily: fontFamily || undefined }}
+        >
+          <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+            Current Raffle
+          </p>
+
+          <NamePicker
+            names={hasActivePickerRaffle ? participants : []}
+            prizeIndex={prizeIndex}
+            animationKey={animationKey}
+            duration={animDuration}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
+            onDone={() => setDoneTiles(1)}
+          />
+
+          <p
+            className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
+            style={{ opacity: doneTiles > 0 && name ? 1 : 0 }}
+          >
+            🎉 {name} — Congratulations!
+          </p>
+        </div>
+      );
+    }
 
     if (animType === "wheel") {
       return (
