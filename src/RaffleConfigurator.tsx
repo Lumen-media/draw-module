@@ -80,7 +80,7 @@ interface RaffleSettings {
 
 const DEFAULT_SETTINGS: RaffleSettings = {
   background: "default",
-  fontSize: 48,
+  fontSize: 80,
   fontFamily: "",
   animType: "slots",
   animDuration: 1600,
@@ -312,7 +312,7 @@ export function createRaffleConfigurator(host: LumenHost) {
     if (!loaded) return null;
 
     return (
-      <div className="relative flex" style={{ width: "56.25rem", maxWidth: "95vw", maxHeight: "80vh" }}>
+      <div className="relative flex select-none" style={{ width: "56.25rem", maxWidth: "95vw", maxHeight: "80vh" }}>
 
         {close && (
           <Button variant="ghost" size="icon-sm" onClick={close} className="absolute top-3 right-3 z-10">
@@ -500,7 +500,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                 </Label>
               )}
             </div>
-            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl">
+            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl select-text">
               <TextEditor
                 ref={editorRef}
                 defaultValue={participants}

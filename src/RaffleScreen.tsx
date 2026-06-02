@@ -296,7 +296,7 @@ export function createRaffleScreen() {
 
       return (
         <div
-          className="w-full h-full relative flex flex-col items-center justify-center gap-6"
+          className="w-full h-full relative flex flex-col items-center justify-center gap-6 select-none"
           style={{ fontFamily: fontFamily || undefined }}
         >
           <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
@@ -326,7 +326,7 @@ export function createRaffleScreen() {
     if (animType === "wheel") {
       return (
         <div
-          className="w-full h-full relative flex flex-col items-center justify-center gap-6"
+          className="w-full h-full relative flex flex-col items-center justify-center gap-6 select-none"
           style={{ fontFamily: fontFamily || undefined }}
         >
           <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
@@ -359,7 +359,7 @@ export function createRaffleScreen() {
 
     return (
       <div
-        className="w-full h-full relative flex flex-col items-center justify-center gap-8"
+        className="w-full h-full relative flex flex-col items-center justify-center gap-8 select-none"
         style={{
           fontFamily: fontFamily || undefined,
           backgroundColor: undefined,
