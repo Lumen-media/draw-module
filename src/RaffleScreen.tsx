@@ -36,18 +36,11 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
     const fullSpins = 4 + Math.floor(Math.random() * 3);
     const totalDeg = fullSpins * 360;
 
-    // Rotation via Web Animations API — no React state involved
     const anim = drum.animate(
       [{ transform: "rotateX(0deg)" }, { transform: `rotateX(${totalDeg}deg)` }],
-      {
-        duration,
-        delay: stagger,
-        easing: "cubic-bezier(0.2, 0, 0.1, 1)",
-        fill: "forwards",
-      }
+      { duration, delay: stagger, easing: "cubic-bezier(0.2, 0, 0.1, 1)", fill: "forwards" }
     );
 
-    // Letter updates via RAF — synced with the same easing curve
     const startTime = performance.now() + stagger;
     let lastFace = -1;
 
@@ -93,34 +86,22 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
   }, [char, index, duration]);
 
   return (
-    <div style={{ perspective: PERSPECTIVE, width: 64, height: 80 }}>
+    <div className="w-16 h-20" style={{ perspective: PERSPECTIVE }}>
       <div
         ref={drumRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          transformStyle: "preserve-3d",
-          transform: isDone ? "rotateX(0deg)" : undefined,
-          position: "relative",
-        }}
+        className="w-full h-full relative transform-3d"
+        style={{ transform: isDone ? "rotateX(0deg)" : undefined }}
       >
         {faceLetters.map((letter, fi) => (
           <div
             key={fi}
+            className="absolute inset-0 flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
             style={{
-              position: "absolute",
-              inset: 0,
               backfaceVisibility: "hidden",
               transform: `rotateX(${-fi * FACE_DEG}deg) translateZ(${RADIUS}px)`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 12,
-              background: "oklch(17% 0.035 265)",
-              border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <span style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "white" }}>
+            <span className="text-[2.5rem] font-extrabold leading-none text-white">
               {letter}
             </span>
           </div>
@@ -148,7 +129,6 @@ export function createRaffleScreen() {
       animationKey = 0,
       background = "solid",
       backgroundColor = "var(--color-background)",
-      fontSize = 72,
       fontFamily = "",
       animType = "roulette",
       animDuration = 1600,
@@ -171,25 +151,16 @@ export function createRaffleScreen() {
 
     const handleTileDone = () => setDoneTiles((n) => n + 1);
 
-    const containerStyle: React.CSSProperties = {
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 40,
-      fontFamily: fontFamily || undefined,
-      backgroundColor: background === "transparent" ? "transparent" : backgroundColor,
-    };
+    const isCard = background === "card";
+    const isTransparent = background === "transparent";
 
-    const tilesRow = words.length > 0 && (
-      <div style={{ display: "flex", alignItems: "center" }}>
+    const tilesContent = words.length > 0 && (
+      <div className="flex items-center">
         {words.map((_, wi) => (
-          <div key={wi} style={{ display: "flex", alignItems: "center" }}>
+          <div key={wi} className="flex items-center">
             {wi > 0 && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
+              <div className="flex items-center justify-center w-10">
+                <div className="w-2 h-2 rounded-full bg-white/20" />
               </div>
             )}
             <div style={{ display: "flex", gap: 16 }}>
@@ -199,15 +170,10 @@ export function createRaffleScreen() {
                   animType === "none" ? (
                     <div
                       key={`${animationKey}-${t.idx}`}
-                      style={{
-                        width: 64, height: 80, display: "flex", alignItems: "center",
-                        justifyContent: "center", borderRadius: 12,
-                        background: "oklch(17% 0.035 265)",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                      }}
+                      className="w-16 h-20 flex items-center justify-center rounded-xl bg-[oklch(17%_0.035_265)] border border-white/[0.07]"
                       onLoad={() => handleTileDone()}
                     >
-                      <span style={{ fontSize: 40, fontWeight: 800, color: "white" }}>
+                      <span className="text-[2.5rem] font-extrabold leading-none text-white">
                         {t.char.toUpperCase()}
                       </span>
                     </div>
@@ -227,36 +193,33 @@ export function createRaffleScreen() {
       </div>
     );
 
-    if (background === "card" && words.length > 0) {
-      return (
-        <div style={{ ...containerStyle, backgroundColor: "transparent" }}>
-          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Current Raffle</p>
-          <div style={{
-            backgroundColor, borderRadius: 24, padding: "32px 48px",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 24,
-          }}>
-            {tilesRow}
-            {allDone && name && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <p style={{ fontSize, fontWeight: 700, color: "var(--color-primary)", margin: 0, fontFamily: fontFamily || undefined }}>{name}</p>
-                <p className="text-sm text-muted-foreground">🎉 Congratulations!</p>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div style={containerStyle}>
-        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Current Raffle</p>
-        {tilesRow}
-        {allDone && name && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <p style={{ fontSize, fontWeight: 700, color: "var(--color-primary)", margin: 0, fontFamily: fontFamily || undefined }}>{name}</p>
-            <p className="text-sm text-muted-foreground">🎉 Congratulations!</p>
+      <div
+        className="w-full h-full flex flex-col items-center justify-center gap-8"
+        style={{
+          fontFamily: fontFamily || undefined,
+          backgroundColor: isCard || isTransparent ? undefined : backgroundColor,
+        }}
+      >
+        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
+          Current Raffle
+        </p>
+
+        {isCard ? (
+          <div
+            className="flex flex-col items-center rounded-[20px] bg-background"
+            style={{ padding: "28px 40px", boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)" }}
+          >
+            {tilesContent}
           </div>
-        )}
+        ) : tilesContent}
+
+        <p
+          className="text-sm text-muted-foreground transition-opacity duration-400"
+          style={{ opacity: allDone && name ? 1 : 0 }}
+        >
+          🎉 Congratulations!
+        </p>
       </div>
     );
   };

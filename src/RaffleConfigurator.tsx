@@ -314,14 +314,12 @@ export function createRaffleConfigurator(host: LumenHost) {
       <div className="relative flex" style={{ width: "56.25rem", maxWidth: "95vw", maxHeight: "80vh" }}>
 
         {close && (
-          <Button variant="ghost" size="icon-sm" onClick={close}
-            style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
+          <Button variant="ghost" size="icon-sm" onClick={close} className="absolute top-3 right-3 z-10">
             <IconX size={16} />
           </Button>
         )}
 
-        <Card className="flex flex-col gap-5 border-none rounded-r-none"
-          style={{ flex: 1, padding: 24, minWidth: 0 }}>
+        <Card className="flex flex-1 flex-col gap-5 min-w-0 p-6 border-none rounded-r-none">
 
           <div className="flex items-center justify-between">
             <h2 className="text-lg leading-none font-bold m-0">Raffle Configurator</h2>
@@ -332,15 +330,15 @@ export function createRaffleConfigurator(host: LumenHost) {
               }>
                 <IconSettings2 size={16} />
               </Popover.PopoverTrigger>
-              <Popover.PopoverContent style={{ width: 256 }}>
+              <Popover.PopoverContent className="w-64">
                 <div className="flex flex-col gap-4">
 
                   <>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 4 }}>List</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">List</span>
                       {creatingList ? (
                         <div className="flex gap-2">
-                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus style={{ flex: 1, fontSize: 13 }} />
+                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus className="flex-1 text-[13px]" />
                           <Button size="sm" onClick={handleCreateList}>Save</Button>
                         </div>
                       ) : (
@@ -374,7 +372,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 2 }}>Appearance</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Appearance</span>
                       {([
                         ["Font", (() => {
                           const CB = Combobox as any;
@@ -462,7 +460,7 @@ export function createRaffleConfigurator(host: LumenHost) {
             </Popover>
           </div>
 
-          <div className="flex flex-col gap-3 bg-secondary rounded-lg" style={{ padding: "14px 18px" }}>
+          <div className="flex flex-col gap-3 bg-secondary rounded-lg py-3.5 px-4.5">
             <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
               <Switch id="remove-duplicates" checked={removeDuplicates}
                 onCheckedChange={async (v: boolean) => {
@@ -489,7 +487,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                 </Label>
               )}
             </div>
-            <ScrollArea className="overflow-hidden bg-secondary rounded-xl" style={{ height: 240 }}>
+            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl">
               <TextEditor
                 ref={editorRef}
                 defaultValue={participants}
@@ -532,14 +530,12 @@ export function createRaffleConfigurator(host: LumenHost) {
 
         <Separator orientation="vertical" />
 
-        <Card className="flex flex-col gap-3 border-none rounded-l-none bg-secondary"
-          style={{ width: 280, padding: 24 }}>
+        <Card className="flex flex-col gap-3 p-6 border-none rounded-l-none bg-secondary" style={{ width: 280 }}>
           <h3 className="text-base leading-none font-bold m-0">Already Raffled</h3>
-          <ScrollArea style={{ flex: 1 }}>
+          <ScrollArea className="flex-1">
             <div className="flex flex-col gap-2">
               {sortedRaffled.map((entry) => (
-                <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg"
-                  style={{ padding: "10px 14px" }}>
+                <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg py-2.5 px-3.5">
                   <span className="text-sm">{entry.name}</span>
                   <Badge variant="secondary">#{entry.order}</Badge>
                 </div>
