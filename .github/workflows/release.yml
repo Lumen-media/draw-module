@@ -26,14 +26,11 @@ jobs:
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
-      - name: Bump package version
-        run: npm version $VERSION --no-git-tag-version --allow-same-version
-
       - name: Install dependencies
         run: npm install
 
-      - name: Sync manifest
-        run: node scripts/sync-manifest.js
+      - name: Bump version and sync manifest
+        run: npm version $VERSION --no-git-tag-version --allow-same-version
 
       - name: Build and pack
         run: npm run pack

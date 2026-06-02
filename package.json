@@ -9,7 +9,7 @@
     "pack": "lumen-module build && lumen-module pack",
     "validate": "lumen-module validate",
     "sync-manifest": "node scripts/sync-manifest.js",
-    "version": "pnpm run sync-manifest && git add manifest.json"
+    "version": "npm run sync-manifest && git add manifest.json"
   },
   "dependencies": {
     "react": "^19.0.0",
