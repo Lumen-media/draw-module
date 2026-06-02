@@ -74,7 +74,7 @@ interface RaffleSettings {
   backgroundMedia?: SelectedBackground;
   fontSize: number;
   fontFamily: string;
-  animType: "roulette" | "none";
+  animType: "slots" | "wheel" | "none";
   animDuration: number;
 }
 
@@ -82,7 +82,7 @@ const DEFAULT_SETTINGS: RaffleSettings = {
   background: "default",
   fontSize: 48,
   fontFamily: "",
-  animType: "roulette",
+  animType: "slots",
   animDuration: 1600,
 };
 
@@ -239,7 +239,9 @@ export function createRaffleConfigurator(host: LumenHost) {
     };
 
     const handleStart = () => {
-      host.presentation.project("raffle-module.raffle-screen", { name: null, animationKey: 0, ...settings });
+      host.presentation.project("raffle-module.raffle-screen", {
+        name: null, animationKey: 0, ...settings, participants: eligible, prizeIndex: -1,
+      });
       setStarted(true);
     };
 
@@ -248,7 +250,9 @@ export function createRaffleConfigurator(host: LumenHost) {
         host.ui.notify({ message: "No eligible names to raffle!", level: "warn" });
         return;
       }
-      const name = eligible[Math.floor(Math.random() * eligible.length)];
+      const currentEligible = [...eligible];
+      const name = currentEligible[Math.floor(Math.random() * currentEligible.length)];
+      const prizeIndex = currentEligible.indexOf(name);
 
       if (doNotRepeat) {
         const updated = addRaffledMarker(participants, name);
@@ -269,7 +273,7 @@ export function createRaffleConfigurator(host: LumenHost) {
       setAlreadyRaffled(newRaffled);
       await host.data.json.set("alreadyRaffled", newRaffled);
       host.presentation.project("raffle-module.raffle-screen", {
-        name, animationKey: Date.now(), ...settings,
+        name, animationKey: Date.now(), ...settings, participants: currentEligible, prizeIndex,
       });
     };
 
@@ -416,7 +420,8 @@ export function createRaffleConfigurator(host: LumenHost) {
                           <Select value={settings.animType} onValueChange={(v) => saveSettings({ ...settings, animType: v as RaffleSettings["animType"] })}>
                             <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
                             <Select.SelectContent>
-                              <Select.SelectItem value="roulette">Roulette</Select.SelectItem>
+                              <Select.SelectItem value="slots">Slots</Select.SelectItem>
+                              <Select.SelectItem value="wheel">Wheel</Select.SelectItem>
                               <Select.SelectItem value="none">None</Select.SelectItem>
                             </Select.SelectContent>
                           </Select>

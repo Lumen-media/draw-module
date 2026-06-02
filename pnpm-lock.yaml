@@ -11,22 +11,28 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.6
+      react-custom-roulette:
+        specifier: ^1.4.1
+        version: 1.4.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react-dom:
         specifier: ^19.0.0
         version: 19.2.6(react@19.2.6)
     devDependencies:
       '@lumen-media/module-cli':
-        specifier: ^0.0.1
-        version: 0.0.1(vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0))
+        specifier: ^0.3.0
+        version: 0.3.3(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))
       '@lumen-media/module-sdk':
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^0.3.2
+        version: 0.3.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tailwindcss/postcss':
         specifier: ^4.3.0
         version: 4.3.0
       '@tailwindcss/vite':
         specifier: ^4.1.11
-        version: 4.3.0(vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0))
+        version: 4.3.0(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.19
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.15
@@ -41,7 +47,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.0.0
-        version: 7.3.3(jiti@2.7.0)(lightningcss@1.32.0)
+        version: 7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)
 
 packages:
 
@@ -225,14 +231,14 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lumen-media/module-cli@0.0.1':
-    resolution: {integrity: sha512-UI9PrBGb1mkTYCmSjlzeL/pe+QICfPWq5G/sXUQ5zigiVp8LBOm/dBvW6vMkPsOcUbKx91gW017SXcdLqs5gMw==}
+  '@lumen-media/module-cli@0.3.3':
+    resolution: {integrity: sha512-dea5Y3sXir+XeCpyR8OHBEB/skB2aeIDpAjtoriltymcffrEUOOIb1O0RdTFZwd5vXxxTIcOOswb8Y4q5ZzUhA==}
     hasBin: true
     peerDependencies:
       vite: '>=5'
 
-  '@lumen-media/module-sdk@0.1.0':
-    resolution: {integrity: sha512-boNpqA8W9IE12f91s2SXSaWw303OYvB4zYROp129BST3Nr9GTbPkB7TxdnXl9WlL2Q9lTIa0NFT8xL9AQlyKVQ==}
+  '@lumen-media/module-sdk@0.3.2':
+    resolution: {integrity: sha512-QuyGzqFm/QZgtNHaeE93HYRQJ4GKV+WG9SYiz13qc8r2R7lKbfiMWhzEwgsrWriVef8NCuPMvrxX77pR6HCP6A==}
     peerDependencies:
       react: '>=19'
       react-dom: '>=19'
@@ -478,6 +484,9 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  '@types/node@22.19.19':
+    resolution: {integrity: sha512-dyh/xO2Fh5bYrfWaaqGrRQQGkNdmYw6AmaAUvYeUMNTWQtvb796ikLdmTchRmOlOiIJ1TDXfWgVx1QkUlQ6Hew==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -839,6 +848,12 @@ packages:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
     engines: {node: '>= 0.6.0'}
 
+  react-custom-roulette@1.4.1:
+    resolution: {integrity: sha512-v5Mrww/lbysSNcAF0PHU7KzdY+ljtTysu6A5Hx5s0Fi2V7CIj36Q2Df+l/1izl8yzX06nnQzvgbwSLenm8vYDQ==}
+    peerDependencies:
+      react: ^18.2.0
+      react-dom: ^18.2.0
+
   react-dom@19.2.6:
     resolution: {integrity: sha512-0prMI+hvBbPjsWnxDLxlCGyM8PN6UuWjEUCYmZhO67xIV9Xasa/r/vDnq+Xyq4Lo27g8QSbO5YzARu0D1Sps3g==}
     peerDependencies:
@@ -937,6 +952,9 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -1108,16 +1126,16 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lumen-media/module-cli@0.0.1(vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0))':
+  '@lumen-media/module-cli@0.3.3(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))':
     dependencies:
       archiver: 7.0.1
-      vite: 7.3.3(jiti@2.7.0)(lightningcss@1.32.0)
+      vite: 7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
       - react-native-b4a
 
-  '@lumen-media/module-sdk@0.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@lumen-media/module-sdk@0.3.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
@@ -1269,14 +1287,18 @@ snapshots:
       postcss: 8.5.15
       tailwindcss: 4.3.0
 
-  '@tailwindcss/vite@4.3.0(vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0))':
+  '@tailwindcss/vite@4.3.0(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0))':
     dependencies:
       '@tailwindcss/node': 4.3.0
       '@tailwindcss/oxide': 4.3.0
       tailwindcss: 4.3.0
-      vite: 7.3.3(jiti@2.7.0)(lightningcss@1.32.0)
+      vite: 7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)
 
   '@types/estree@1.0.8': {}
+
+  '@types/node@22.19.19':
+    dependencies:
+      undici-types: 6.21.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.15)':
     dependencies:
@@ -1601,6 +1623,11 @@ snapshots:
 
   process@0.11.10: {}
 
+  react-custom-roulette@1.4.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+    dependencies:
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
   react-dom@19.2.6(react@19.2.6):
     dependencies:
       react: 19.2.6
@@ -1749,9 +1776,11 @@ snapshots:
 
   typescript@5.9.3: {}
 
+  undici-types@6.21.0: {}
+
   util-deprecate@1.0.2: {}
 
-  vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0):
+  vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.4)
@@ -1760,6 +1789,7 @@ snapshots:
       rollup: 4.60.4
       tinyglobby: 0.2.16
     optionalDependencies:
+      '@types/node': 22.19.19
       fsevents: 2.3.3
       jiti: 2.7.0
       lightningcss: 1.32.0

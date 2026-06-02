@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Wheel } from "react-custom-roulette";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
@@ -127,8 +128,10 @@ interface RaffleScreenProps {
   backgroundMedia?: RaffleScreenBackground;
   fontSize?: number;
   fontFamily?: string;
-  animType?: "roulette" | "none";
+  animType?: "slots" | "wheel" | "none";
   animDuration?: number;
+  participants?: string[];
+  prizeIndex?: number;
 }
 
 export function createRaffleScreen() {
@@ -140,8 +143,10 @@ export function createRaffleScreen() {
       backgroundMedia,
       fontSize = 48,
       fontFamily = "",
-      animType = "roulette",
+      animType = "slots",
       animDuration = 1600,
+      participants = [],
+      prizeIndex = -1,
     } = (rawProps ?? {}) as RaffleScreenProps;
 
     const words = name ? name.trim().split(/\s+/) : [];
@@ -155,11 +160,22 @@ export function createRaffleScreen() {
     const [doneTiles, setDoneTiles] = useState(0);
     const allDone = tiles.length > 0 && doneTiles >= tiles.length;
 
+    const [mustSpin, setMustSpin] = useState(false);
+    const [wheelDone, setWheelDone] = useState(false);
+
     useEffect(() => {
       setDoneTiles(0);
+      setWheelDone(false);
+      if (animType === "wheel" && prizeIndex >= 0 && animationKey > 0) {
+        setMustSpin(true);
+      }
     }, [animationKey]);
 
     const handleTileDone = () => setDoneTiles((n) => n + 1);
+
+    const wheelData = participants.length >= 2
+      ? participants.map((p) => ({ option: p }))
+      : [{ option: "?" }, { option: "?" }];
 
     const isCard = background === "card";
 
@@ -208,6 +224,40 @@ export function createRaffleScreen() {
       </div>
     );
 
+    if (animType === "wheel") {
+      return (
+        <div
+          className="w-full h-full relative flex flex-col items-center justify-center gap-6"
+          style={{ fontFamily: fontFamily || undefined }}
+        >
+          <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+            Current Raffle
+          </p>
+          <Wheel
+            mustStartSpinning={mustSpin}
+            prizeNumber={prizeIndex >= 0 ? prizeIndex : 0}
+            data={wheelData}
+            onStopSpinning={() => { setMustSpin(false); setWheelDone(true); }}
+            backgroundColors={["#1e1b4b", "#312e81", "#4338ca", "#6d28d9", "#7c3aed"]}
+            textColors={["#ffffff"]}
+            outerBorderColor="rgba(255,255,255,0.1)"
+            outerBorderWidth={2}
+            innerRadius={0}
+            radiusLineColor="rgba(255,255,255,0.08)"
+            radiusLineWidth={1}
+            fontSize={Math.max(10, Math.min(26, Math.floor(220 / wheelData.length)))}
+            spinDuration={0.8}
+          />
+          <p
+            className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
+            style={{ opacity: wheelDone && name ? 1 : 0 }}
+          >
+            🎉 {name} — Congratulations!
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div
         className="w-full h-full relative flex flex-col items-center justify-center gap-8"
@@ -216,7 +266,7 @@ export function createRaffleScreen() {
           backgroundColor: undefined,
         }}
       >
-        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+        <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
           Current Raffle
         </p>
 
@@ -230,7 +280,7 @@ export function createRaffleScreen() {
         ) : tilesContent}
 
         <p
-          className="text-sm text-muted-foreground transition-opacity duration-400"
+          className="text-xl text-muted-foreground transition-opacity duration-400"
           style={{ opacity: allDone && name ? 1 : 0 }}
         >
           🎉 Congratulations!
