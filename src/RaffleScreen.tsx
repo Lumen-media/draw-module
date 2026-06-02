@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
 
-const FACES = 6;
+const FACES = 4;
 const FACE_DEG = 360 / FACES;
-const RADIUS = 36;
-const PERSPECTIVE = 220;
+const RADIUS = 40;
+const PERSPECTIVE = 240;
 
 interface TileProps {
   char: string;
@@ -16,74 +16,91 @@ interface TileProps {
 }
 
 function LetterTile({ char, index, onDone, duration }: TileProps) {
-  const [rot, setRot] = useState(0);
   const [faceLetters, setFaceLetters] = useState<string[]>(() =>
     Array.from({ length: FACES }, rand)
   );
+  const [isDone, setIsDone] = useState(false);
+  const drumRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef(0);
-  const startRef = useRef<number | null>(null);
+  const doneRef = useRef(false);
 
   useEffect(() => {
-    setRot(0);
+    doneRef.current = false;
+    setIsDone(false);
     setFaceLetters(Array.from({ length: FACES }, rand));
-    startRef.current = null;
 
+    const drum = drumRef.current;
+    if (!drum) return;
+
+    const stagger = index * 90;
     const fullSpins = 4 + Math.floor(Math.random() * 3);
     const totalDeg = fullSpins * 360;
-    const stagger = index * 90;
 
-    let lastFacePassed = -1;
+    // Rotation via Web Animations API — no React state involved
+    const anim = drum.animate(
+      [{ transform: "rotateX(0deg)" }, { transform: `rotateX(${totalDeg}deg)` }],
+      {
+        duration,
+        delay: stagger,
+        easing: "cubic-bezier(0.2, 0, 0.1, 1)",
+        fill: "forwards",
+      }
+    );
 
-    const frame = (ts: number) => {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = ts - startRef.current;
+    // Letter updates via RAF — synced with the same easing curve
+    const startTime = performance.now() + stagger;
+    let lastFace = -1;
+
+    const updateLetters = (now: number) => {
+      if (doneRef.current) return;
+      const elapsed = now - startTime;
+      if (elapsed < 0) { rafRef.current = requestAnimationFrame(updateLetters); return; }
       const t = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       const deg = eased * totalDeg;
-
-      setRot(deg);
-
       const faceNow = Math.floor(deg / FACE_DEG) % FACES;
-      if (faceNow !== lastFacePassed && t < 0.88) {
-        lastFacePassed = faceNow;
+      if (faceNow !== lastFace) {
+        lastFace = faceNow;
         setFaceLetters(prev => {
           const next = [...prev];
           next[(faceNow + Math.floor(FACES / 2)) % FACES] = rand();
           return next;
         });
       }
-
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(frame);
-      } else {
-        setFaceLetters(prev => {
-          const next = [...prev];
-          next[0] = char.toUpperCase();
-          return next;
-        });
-        setRot(totalDeg);
-        onDone();
-      }
+      if (t < 1) rafRef.current = requestAnimationFrame(updateLetters);
     };
 
-    const tid = setTimeout(() => {
-      rafRef.current = requestAnimationFrame(frame);
-    }, stagger);
+    rafRef.current = requestAnimationFrame(updateLetters);
+
+    anim.addEventListener("finish", () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      cancelAnimationFrame(rafRef.current);
+      setFaceLetters(prev => {
+        const next = [...prev];
+        next[0] = char.toUpperCase();
+        return next;
+      });
+      setIsDone(true);
+      onDone();
+    });
 
     return () => {
-      clearTimeout(tid);
+      doneRef.current = true;
       cancelAnimationFrame(rafRef.current);
+      anim.cancel();
     };
   }, [char, index, duration]);
 
   return (
     <div style={{ perspective: PERSPECTIVE, width: 64, height: 80 }}>
       <div
+        ref={drumRef}
         style={{
           width: "100%",
           height: "100%",
           transformStyle: "preserve-3d",
-          transform: `rotateX(${rot}deg)`,
+          transform: isDone ? "rotateX(0deg)" : undefined,
           position: "relative",
         }}
       >
@@ -116,9 +133,11 @@ function LetterTile({ char, index, onDone, duration }: TileProps) {
 interface RaffleScreenProps {
   name?: string | null;
   animationKey?: number;
-  background?: "default" | "transparent" | "card";
+  background?: "solid" | "transparent" | "card";
+  backgroundColor?: string;
   fontSize?: number;
   fontFamily?: string;
+  animType?: "roulette" | "none";
   animDuration?: number;
 }
 
@@ -127,9 +146,11 @@ export function createRaffleScreen() {
     const {
       name,
       animationKey = 0,
-      background = "default",
+      background = "solid",
+      backgroundColor = "var(--color-background)",
       fontSize = 72,
       fontFamily = "",
+      animType = "roulette",
       animDuration = 1600,
     } = (rawProps ?? {}) as RaffleScreenProps;
 
@@ -159,10 +180,7 @@ export function createRaffleScreen() {
       justifyContent: "center",
       gap: 40,
       fontFamily: fontFamily || undefined,
-      backgroundColor:
-        background === "transparent"
-          ? "transparent"
-          : "var(--color-background)",
+      backgroundColor: background === "transparent" ? "transparent" : backgroundColor,
     };
 
     const tilesRow = words.length > 0 && (
@@ -178,13 +196,30 @@ export function createRaffleScreen() {
               {tiles
                 .filter((t) => t.word === wi)
                 .map((t) => (
-                  <LetterTile
-                    key={`${animationKey}-${t.idx}`}
-                    char={t.char}
-                    index={t.idx}
-                    onDone={handleTileDone}
-                    duration={animDuration}
-                  />
+                  animType === "none" ? (
+                    <div
+                      key={`${animationKey}-${t.idx}`}
+                      style={{
+                        width: 64, height: 80, display: "flex", alignItems: "center",
+                        justifyContent: "center", borderRadius: 12,
+                        background: "oklch(17% 0.035 265)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                      }}
+                      onLoad={() => handleTileDone()}
+                    >
+                      <span style={{ fontSize: 40, fontWeight: 800, color: "white" }}>
+                        {t.char.toUpperCase()}
+                      </span>
+                    </div>
+                  ) : (
+                    <LetterTile
+                      key={`${animationKey}-${t.idx}`}
+                      char={t.char}
+                      index={t.idx}
+                      onDone={handleTileDone}
+                      duration={animDuration}
+                    />
+                  )
                 ))}
             </div>
           </div>
@@ -195,17 +230,10 @@ export function createRaffleScreen() {
     if (background === "card" && words.length > 0) {
       return (
         <div style={{ ...containerStyle, backgroundColor: "transparent" }}>
-          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
-            Current Raffle
-          </p>
+          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Current Raffle</p>
           <div style={{
-            backgroundColor: "var(--color-background)",
-            borderRadius: 24,
-            padding: "32px 48px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 24,
+            backgroundColor, borderRadius: 24, padding: "32px 48px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 24,
           }}>
             {tilesRow}
             {allDone && name && (
@@ -221,9 +249,7 @@ export function createRaffleScreen() {
 
     return (
       <div style={containerStyle}>
-        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
-          Current Raffle
-        </p>
+        <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">Current Raffle</p>
         {tilesRow}
         {allDone && name && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
