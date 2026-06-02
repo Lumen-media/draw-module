@@ -3,18 +3,19 @@ import { useEffect, useRef, useState } from "react";
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const rand = () => ALPHABET[Math.floor(Math.random() * 26)];
 
-const FACES = 4;
+const FACES = 6;
 const FACE_DEG = 360 / FACES;
-const RADIUS = 40;
-const PERSPECTIVE = 260;
+const RADIUS = 36;
+const PERSPECTIVE = 220;
 
 interface TileProps {
   char: string;
   index: number;
   onDone: () => void;
+  duration: number;
 }
 
-function LetterTile({ char, index, onDone }: TileProps) {
+function LetterTile({ char, index, onDone, duration }: TileProps) {
   const [rot, setRot] = useState(0);
   const [faceLetters, setFaceLetters] = useState<string[]>(() =>
     Array.from({ length: FACES }, rand)
@@ -23,14 +24,12 @@ function LetterTile({ char, index, onDone }: TileProps) {
   const startRef = useRef<number | null>(null);
 
   useEffect(() => {
-
     setRot(0);
     setFaceLetters(Array.from({ length: FACES }, rand));
     startRef.current = null;
 
     const fullSpins = 4 + Math.floor(Math.random() * 3);
     const totalDeg = fullSpins * 360;
-    const duration = 1600;
     const stagger = index * 90;
 
     let lastFacePassed = -1;
@@ -75,7 +74,7 @@ function LetterTile({ char, index, onDone }: TileProps) {
       clearTimeout(tid);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [char, index]);
+  }, [char, index, duration]);
 
   return (
     <div style={{ perspective: PERSPECTIVE, width: 64, height: 80 }}>
@@ -104,14 +103,7 @@ function LetterTile({ char, index, onDone }: TileProps) {
               border: "1px solid rgba(255,255,255,0.07)",
             }}
           >
-            <span
-              style={{
-                fontSize: 40,
-                fontWeight: 800,
-                lineHeight: 1,
-                color: "white",
-              }}
-            >
+            <span style={{ fontSize: 40, fontWeight: 800, lineHeight: 1, color: "white" }}>
               {letter}
             </span>
           </div>
@@ -124,11 +116,23 @@ function LetterTile({ char, index, onDone }: TileProps) {
 interface RaffleScreenProps {
   name?: string | null;
   animationKey?: number;
+  background?: "default" | "transparent" | "card";
+  fontSize?: number;
+  fontFamily?: string;
+  animDuration?: number;
 }
 
 export function createRaffleScreen() {
   return function RaffleScreenPanel(rawProps: unknown) {
-    const { name, animationKey = 0 } = (rawProps ?? {}) as RaffleScreenProps;
+    const {
+      name,
+      animationKey = 0,
+      background = "default",
+      fontSize = 72,
+      fontFamily = "",
+      animDuration = 1600,
+    } = (rawProps ?? {}) as RaffleScreenProps;
+
     const words = name ? name.trim().split(/\s+/) : [];
 
     const tiles: { word: number; char: string; idx: number }[] = [];
@@ -146,41 +150,84 @@ export function createRaffleScreen() {
 
     const handleTileDone = () => setDoneTiles((n) => n + 1);
 
+    const containerStyle: React.CSSProperties = {
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 40,
+      fontFamily: fontFamily || undefined,
+      backgroundColor:
+        background === "transparent"
+          ? "transparent"
+          : "var(--color-background)",
+    };
+
+    const tilesRow = words.length > 0 && (
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {words.map((_, wi) => (
+          <div key={wi} style={{ display: "flex", alignItems: "center" }}>
+            {wi > 0 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 16 }}>
+              {tiles
+                .filter((t) => t.word === wi)
+                .map((t) => (
+                  <LetterTile
+                    key={`${animationKey}-${t.idx}`}
+                    char={t.char}
+                    index={t.idx}
+                    onDone={handleTileDone}
+                    duration={animDuration}
+                  />
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
+    if (background === "card" && words.length > 0) {
+      return (
+        <div style={{ ...containerStyle, backgroundColor: "transparent" }}>
+          <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
+            Current Raffle
+          </p>
+          <div style={{
+            backgroundColor: "var(--color-background)",
+            borderRadius: 24,
+            padding: "32px 48px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 24,
+          }}>
+            {tilesRow}
+            {allDone && name && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <p style={{ fontSize, fontWeight: 700, color: "var(--color-primary)", margin: 0, fontFamily: fontFamily || undefined }}>{name}</p>
+                <p className="text-sm text-muted-foreground">🎉 Congratulations!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-10 bg-background">
+      <div style={containerStyle}>
         <p className="text-xs tracking-[0.3em] uppercase text-muted-foreground">
           Current Raffle
         </p>
-
-        {words.length > 0 && (
-          <div className="flex items-center">
-            {words.map((_, wi) => (
-              <div key={wi} className="flex items-center">
-                {wi > 0 && (
-                  <div className="flex items-center justify-center w-10">
-                    <div className="w-2 h-2 rounded-full bg-foreground/20" />
-                  </div>
-                )}
-                <div className="flex gap-5">
-                  {tiles
-                    .filter((t) => t.word === wi)
-                    .map((t) => (
-                      <LetterTile
-                        key={`${animationKey}-${t.idx}`}
-                        char={t.char}
-                        index={t.idx}
-                        onDone={handleTileDone}
-                      />
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
+        {tilesRow}
         {allDone && name && (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-7xl font-bold text-primary">{name}</p>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <p style={{ fontSize, fontWeight: 700, color: "var(--color-primary)", margin: 0, fontFamily: fontFamily || undefined }}>{name}</p>
             <p className="text-sm text-muted-foreground">🎉 Congratulations!</p>
           </div>
         )}

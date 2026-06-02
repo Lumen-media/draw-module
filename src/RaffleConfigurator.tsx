@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import type { LumenHost } from "@lumen-media/module-sdk";
-import { Badge, Button, Card, Label, ScrollArea, Separator, Switch, TextEditor } from "@lumen-media/module-sdk/ui";
+import {
+  Badge, Button, Card, Combobox, Input, Label, Popover, ScrollArea,
+  Select, Separator, Switch, TextEditor,
+} from "@lumen-media/module-sdk/ui";
 import type { TextEditorRef } from "@lumen-media/module-sdk/ui";
 
 function IconX({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+      <path d="M18 6 6 18" /><path d="m6 6 12 12" />
     </svg>
   );
 }
@@ -14,9 +17,9 @@ function IconX({ size = 16 }: { size?: number }) {
 function IconShuffle({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="m18 14 3 3-3 3"/><path d="m18 4 3 3-3 3"/>
-      <path d="M3 7h3a5 5 0 0 1 5 5 5 5 0 0 0 5 5h4"/>
-      <path d="M3 17h3a5 5 0 0 0 5-5 5 5 0 0 1 5-5h4"/>
+      <path d="m18 14 3 3-3 3" /><path d="m18 4 3 3-3 3" />
+      <path d="M3 7h3a5 5 0 0 1 5 5 5 5 0 0 0 5 5h4" />
+      <path d="M3 17h3a5 5 0 0 0 5-5 5 5 0 0 1 5-5h4" />
     </svg>
   );
 }
@@ -24,8 +27,8 @@ function IconShuffle({ size = 16 }: { size?: number }) {
 function IconRotateCcw({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-      <path d="M3 3v5h5"/>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
     </svg>
   );
 }
@@ -33,15 +36,59 @@ function IconRotateCcw({ size = 16 }: { size?: number }) {
 function IconPlay({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
-      <polygon points="6 3 20 12 6 21 6 3"/>
+      <polygon points="6 3 20 12 6 21 6 3" />
     </svg>
   );
 }
+
+function IconSettings2({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 17H5" /><path d="M19 7h-9" />
+      <circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" />
+    </svg>
+  );
+}
+
+function IconPlus({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14" /><path d="M12 5v14" />
+    </svg>
+  );
+}
+
 
 interface RaffledEntry {
   name: string;
   order: number;
 }
+
+interface RaffleList {
+  id: string;
+  name: string;
+  participants: string;
+}
+
+interface RaffleSettings {
+  background: "solid" | "transparent" | "card";
+  backgroundColor: string;
+  fontSize: number;
+  fontFamily: string;
+  animType: "roulette" | "none";
+  animDuration: number;
+}
+
+const PRESET_COLORS = ["var(--color-primary)", "#0f172a", "#1e293b", "#374151"];
+
+const DEFAULT_SETTINGS: RaffleSettings = {
+  background: "solid",
+  backgroundColor: "var(--color-background)",
+  fontSize: 72,
+  fontFamily: "",
+  animType: "roulette",
+  animDuration: 1600,
+};
 
 function stripMarkdownLine(line: string): string {
   return line
@@ -57,10 +104,7 @@ function stripMarkdownLine(line: string): string {
 }
 
 function parseNames(text: string, removeDuplicates: boolean): string[] {
-  const names = text
-    .split("\n")
-    .map(stripMarkdownLine)
-    .filter((n) => n.length > 0);
+  const names = text.split("\n").map(stripMarkdownLine).filter((n) => n.length > 0);
   if (removeDuplicates) return [...new Set(names)];
   return names;
 }
@@ -97,29 +141,36 @@ export function createRaffleConfigurator(host: LumenHost) {
     const [loaded, setLoaded] = useState(false);
     const [started, setStarted] = useState(false);
 
+    const [lists, setLists] = useState<RaffleList[]>([]);
+    const [activeListId, setActiveListId] = useState<string | null>(null);
+    const [settings, setSettings] = useState<RaffleSettings>(DEFAULT_SETTINGS);
+    const [systemFonts, setSystemFonts] = useState<string[]>([]);
+    const [newListName, setNewListName] = useState("");
+    const [creatingList, setCreatingList] = useState(false);
+
     useEffect(() => {
       Promise.all([
         host.data.json.get<string>("participants", ""),
         host.data.json.get<boolean>("removeDuplicates", true),
         host.data.json.get<boolean>("doNotRepeat", true),
         host.data.json.get<RaffledEntry[]>("alreadyRaffled", []),
-      ]).then(([p, rd, dnr, ad]) => {
+        host.data.json.get<RaffleList[]>("lists", []),
+        host.data.json.get<string | null>("activeListId", null),
+        host.data.json.get<RaffleSettings>("settings", DEFAULT_SETTINGS),
+      ]).then(([p, rd, dnr, ad, ls, lid, st]) => {
         setParticipants(p);
         setRemoveDuplicates(rd);
         setDoNotRepeat(dnr);
         setAlreadyRaffled(ad);
+        setLists(ls);
+        setActiveListId(lid);
+        setSettings({ ...DEFAULT_SETTINGS, ...st });
         setLoaded(true);
       });
-    }, []);
 
-    const eligible = (() => {
-      const all = parseNames(participants, removeDuplicates);
-      if (doNotRepeat) {
-        return all.filter((n) => !n.startsWith("*"));
-      }
-      const clean = all.map((n) => (n.startsWith("*") ? n.slice(1) : n));
-      return removeDuplicates ? [...new Set(clean)] : clean;
-    })();
+      const h = host as unknown as { fonts?: { list(): Promise<string[]> } };
+      h.fonts?.list().then((fonts) => setSystemFonts(fonts)).catch(() => { });
+    }, []);
 
     useEffect(() => {
       const d = host.presentation.onStateChange((state) => {
@@ -128,14 +179,72 @@ export function createRaffleConfigurator(host: LumenHost) {
       return () => d.dispose();
     }, []);
 
-    const handleStart = () => {
-      host.presentation.project("raffle-module.raffle-screen", { name: null, animationKey: 0 });
-      setStarted(true);
+    const eligible = (() => {
+      const all = parseNames(participants, removeDuplicates);
+      if (doNotRepeat) return all.filter((n) => !n.startsWith("*"));
+      const clean = all.map((n) => (n.startsWith("*") ? n.slice(1) : n));
+      return removeDuplicates ? [...new Set(clean)] : clean;
+    })();
+
+    const saveSettings = async (next: RaffleSettings) => {
+      setSettings(next);
+      await host.data.json.set("settings", next);
     };
 
-    const handleExit = () => {
-      host.presentation.clear();
-      setStarted(false);
+    const handleParticipantsChange = async (md: string) => {
+      setParticipants(md);
+      await host.data.json.set("participants", md);
+      if (activeListId) {
+        const updated = lists.map((l) => l.id === activeListId ? { ...l, participants: md } : l);
+        setLists(updated);
+        await host.data.json.set("lists", updated);
+      }
+    };
+
+    const handleSelectList = async (id: string) => {
+      const list = lists.find((l) => l.id === id);
+      if (!list) return;
+      setActiveListId(id);
+      await host.data.json.set("activeListId", id);
+      setParticipants(list.participants);
+      await host.data.json.set("participants", list.participants);
+      editorRef.current?.setMarkdown(list.participants);
+    };
+
+    const handleCreateList = async () => {
+      if (!newListName.trim()) return;
+      const id = `list-${Date.now()}`;
+      const content = activeListId ? "" : participants;
+      const newList: RaffleList = { id, name: newListName.trim(), participants: content };
+      const updated = [...lists, newList];
+      setLists(updated);
+      setActiveListId(id);
+      setNewListName("");
+      setCreatingList(false);
+      await host.data.json.set("lists", updated);
+      await host.data.json.set("activeListId", id);
+      if (!activeListId) {
+        setParticipants(content);
+      } else {
+        setParticipants("");
+        await host.data.json.set("participants", "");
+        editorRef.current?.setMarkdown("");
+      }
+    };
+
+    const handleDeleteList = async (id: string) => {
+      const updated = lists.filter((l) => l.id !== id);
+      setLists(updated);
+      await host.data.json.set("lists", updated);
+      if (activeListId === id) {
+        setActiveListId(null);
+        await host.data.json.set("activeListId", null);
+      }
+    };
+
+    const handleStart = () => {
+      host.presentation.project("raffle-module.raffle-screen", { name: null, animationKey: 0, ...settings });
+      setStarted(true);
     };
 
     const handleRaffle = async () => {
@@ -150,13 +259,27 @@ export function createRaffleConfigurator(host: LumenHost) {
         setParticipants(updated);
         await host.data.json.set("participants", updated);
         editorRef.current?.setMarkdown(updated);
+        if (activeListId) {
+          const updatedLists = lists.map((l) =>
+            l.id === activeListId ? { ...l, participants: updated } : l
+          );
+          setLists(updatedLists);
+          await host.data.json.set("lists", updatedLists);
+        }
       }
 
       const newEntry: RaffledEntry = { name, order: alreadyRaffled.length + 1 };
       const newRaffled = [...alreadyRaffled, newEntry];
       setAlreadyRaffled(newRaffled);
       await host.data.json.set("alreadyRaffled", newRaffled);
-      host.presentation.project("raffle-module.raffle-screen", { name, animationKey: Date.now() });
+      host.presentation.project("raffle-module.raffle-screen", {
+        name, animationKey: Date.now(), ...settings,
+      });
+    };
+
+    const handleExit = () => {
+      host.presentation.clear();
+      setStarted(false);
     };
 
     const handleReset = async () => {
@@ -166,6 +289,13 @@ export function createRaffleConfigurator(host: LumenHost) {
       setParticipants(cleaned);
       await host.data.json.set("participants", cleaned);
       editorRef.current?.setMarkdown(cleaned);
+      if (activeListId) {
+        const updatedLists = lists.map((l) =>
+          l.id === activeListId ? { ...l, participants: cleaned } : l
+        );
+        setLists(updatedLists);
+        await host.data.json.set("lists", updatedLists);
+      }
       if (started) {
         host.presentation.clear();
         setStarted(false);
@@ -173,58 +303,199 @@ export function createRaffleConfigurator(host: LumenHost) {
     };
 
     const sortedRaffled = [...alreadyRaffled].sort((a, b) => b.order - a.order);
+    const activeList = lists.find((l) => l.id === activeListId);
+    const fontOptions = systemFonts.length > 0 ? systemFonts : [
+      "Arial", "Georgia", "Impact", "Segoe UI", "Tahoma", "Times New Roman", "Verdana",
+    ];
 
     if (!loaded) return null;
 
     return (
-      <div className="relative flex w-[56.25rem] max-w-[95vw] max-h-[80vh]">
+      <div className="relative flex" style={{ width: "56.25rem", maxWidth: "95vw", maxHeight: "80vh" }}>
 
         {close && (
-          <Button variant="ghost" size="icon-sm" onClick={close} className="absolute top-3 right-3 z-10">
+          <Button variant="ghost" size="icon-sm" onClick={close}
+            style={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
             <IconX size={16} />
           </Button>
         )}
 
-        <Card className="flex flex-1 flex-col gap-5 min-w-0 p-6 border-none rounded-r-none">
-          <div className="pr-8">
+        <Card className="flex flex-col gap-5 border-none rounded-r-none"
+          style={{ flex: 1, padding: 24, minWidth: 0 }}>
+
+          <div className="flex items-center justify-between">
             <h2 className="text-lg leading-none font-bold m-0">Raffle Configurator</h2>
+
+            <Popover>
+              <Popover.PopoverTrigger render={
+                <Button variant="ghost" size="icon-sm" />
+              }>
+                <IconSettings2 size={16} />
+              </Popover.PopoverTrigger>
+              <Popover.PopoverContent style={{ width: 256 }}>
+                <div className="flex flex-col gap-4">
+
+                  <>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 4 }}>List</span>
+                      {creatingList ? (
+                        <div className="flex gap-2">
+                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus style={{ flex: 1, fontSize: 13 }} />
+                          <Button size="sm" onClick={handleCreateList}>Save</Button>
+                        </div>
+                      ) : (
+                        <Select
+                          value={activeListId ?? ""}
+                          onValueChange={(v) => {
+                            if (v === "__create__") { setCreatingList(true); return; }
+                            if (v === "") { setActiveListId(null); host.data.json.set("activeListId", null); }
+                            else { handleSelectList(v); }
+                          }}
+                        >
+                          <Select.SelectTrigger className="w-full text-sm">
+                            <Select.SelectValue placeholder="Create list...">
+                              {activeListId
+                                ? (lists.find((l) => l.id === activeListId)?.name ?? activeListId)
+                                : undefined}
+                            </Select.SelectValue>
+                          </Select.SelectTrigger>
+                          <Select.SelectContent>
+                            <ScrollArea>
+                              {lists.length > 0 && <Select.SelectItem value="">No list</Select.SelectItem>}
+                              {lists.map((l) => (
+                                <Select.SelectItem key={l.id} value={l.id}>{l.name}</Select.SelectItem>
+                              ))}
+                              {lists.length > 0 && <Select.SelectSeparator />}
+                              <Select.SelectItem value="__create__">+ Create list</Select.SelectItem>
+                            </ScrollArea>
+                          </Select.SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 2 }}>Appearance</span>
+                      {([
+                        ["Font", (() => {
+                          const CB = Combobox as any;
+                          return (
+                            <CB
+                              value={settings.fontFamily || null}
+                              onValueChange={(val: string | null) => saveSettings({ ...settings, fontFamily: val ?? "" })}
+                            >
+                              <CB.ComboboxInput
+                                placeholder={settings.fontFamily || "System default"}
+                                className="h-8 bg-transparent"
+                                style={{ width: 130, fontSize: 13 }}
+                              />
+                              <CB.ComboboxContent className="w-56" align="center">
+                                <CB.ComboboxList>
+                                  <CB.ComboboxEmpty style={{ fontSize: 12 }}>No fonts found</CB.ComboboxEmpty>
+                                  {fontOptions.map((f: string) => (
+                                    <CB.ComboboxItem key={f} value={f}>
+                                      <span style={{ fontFamily: f, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", maxWidth: 200 }}>{f}</span>
+                                    </CB.ComboboxItem>
+                                  ))}
+                                </CB.ComboboxList>
+                              </CB.ComboboxContent>
+                            </CB>
+                          );
+                        })()],
+                        ["Font Size", (
+                          <Select value={String(settings.fontSize)} onValueChange={(v) => saveSettings({ ...settings, fontSize: Number(v) })}>
+                            <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
+                            <Select.SelectContent>
+                              {[24, 32, 40, 48, 56, 64, 72, 80, 96, 112, 120].map((s) => <Select.SelectItem key={s} value={String(s)}>{s}px</Select.SelectItem>)}
+                            </Select.SelectContent>
+                          </Select>
+                        )],
+                        ["Animation", (
+                          <Select value={settings.animType} onValueChange={(v) => saveSettings({ ...settings, animType: v as RaffleSettings["animType"] })}>
+                            <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
+                            <Select.SelectContent>
+                              <Select.SelectItem value="roulette">Roulette</Select.SelectItem>
+                              <Select.SelectItem value="none">None</Select.SelectItem>
+                            </Select.SelectContent>
+                          </Select>
+                        )],
+                      ] as [string, React.ReactNode][]).map(([label, control]) => (
+                        <div key={label} className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">{label}</span>
+                          {control}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" style={{ marginBottom: 2 }}>Background</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Type</span>
+                        <Select value={settings.background} onValueChange={(v) => saveSettings({ ...settings, background: v as RaffleSettings["background"] })}>
+                          <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
+                          <Select.SelectContent>
+                            <Select.SelectItem value="solid">Solid Color</Select.SelectItem>
+                            <Select.SelectItem value="transparent">Transparent</Select.SelectItem>
+                            <Select.SelectItem value="card">Card</Select.SelectItem>
+                          </Select.SelectContent>
+                        </Select>
+                      </div>
+                      {settings.background === "solid" && (
+                        <div className="flex gap-1.5" style={{ marginTop: 4 }}>
+                          {PRESET_COLORS.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => saveSettings({ ...settings, backgroundColor: c })}
+                              style={{ width: 28, height: 28, borderRadius: 6, background: c, border: settings.backgroundColor === c ? "2px solid var(--color-primary)" : "2px solid transparent", cursor: "pointer", flexShrink: 0 }}
+                            />
+                          ))}
+                          <button type="button" className="flex items-center justify-center text-muted-foreground" style={{ width: 28, height: 28, borderRadius: 6, border: "1.5px dashed var(--color-border)", background: "none", cursor: "pointer" }}>
+                            <IconPlus size={12} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+
+                </div>
+              </Popover.PopoverContent>
+            </Popover>
           </div>
 
-          <div className="flex flex-col gap-3 bg-secondary rounded-lg py-3.5 px-4.5">
+          <div className="flex flex-col gap-3 bg-secondary rounded-lg" style={{ padding: "14px 18px" }}>
             <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
-              <Switch
-                id="remove-duplicates"
-                checked={removeDuplicates}
+              <Switch id="remove-duplicates" checked={removeDuplicates}
                 onCheckedChange={async (v: boolean) => {
                   setRemoveDuplicates(v);
                   await host.data.json.set("removeDuplicates", v);
-                }}
-              />
+                }} />
             </Label>
             <Label className="flex items-center justify-between" htmlFor="do-not-repeat">Do not repeat names
-              <Switch
-                id="do-not-repeat"
-                checked={doNotRepeat}
+              <Switch id="do-not-repeat" checked={doNotRepeat}
                 onCheckedChange={async (v: boolean) => {
                   setDoNotRepeat(v);
                   await host.data.json.set("doNotRepeat", v);
-                }}
-              />
+                }} />
             </Label>
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground">Participants (one per line)</Label>
-            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl">
+
+            <div className="flex justify-between items-center">
+              <Label className="text-muted-foreground">Participants (one per line)</Label>
+              {activeListId && (
+                <Label className="text-xs text-muted-foreground">
+                  List: <span className="text-foreground font-medium">{activeList?.name}</span>
+                </Label>
+              )}
+            </div>
+            <ScrollArea className="overflow-hidden bg-secondary rounded-xl" style={{ height: 240 }}>
               <TextEditor
                 ref={editorRef}
                 defaultValue={participants}
                 placeholder="One name per line..."
                 debounce={300}
-                onChange={async (md: string) => {
-                  setParticipants(md);
-                  await host.data.json.set("participants", md);
-                }}
+                onChange={handleParticipantsChange}
               />
             </ScrollArea>
             <p className="text-xs text-muted-foreground m-0">
@@ -261,12 +532,14 @@ export function createRaffleConfigurator(host: LumenHost) {
 
         <Separator orientation="vertical" />
 
-        <Card className="flex flex-col gap-3 w-70 p-6 border-none rounded-l-none bg-secondary">
+        <Card className="flex flex-col gap-3 border-none rounded-l-none bg-secondary"
+          style={{ width: 280, padding: 24 }}>
           <h3 className="text-base leading-none font-bold m-0">Already Raffled</h3>
-          <ScrollArea className="flex-1">
+          <ScrollArea style={{ flex: 1 }}>
             <div className="flex flex-col gap-2">
               {sortedRaffled.map((entry) => (
-                <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg py-2.5 px-3.5">
+                <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg"
+                  style={{ padding: "10px 14px" }}>
                   <span className="text-sm">{entry.name}</span>
                   <Badge variant="secondary">#{entry.order}</Badge>
                 </div>
