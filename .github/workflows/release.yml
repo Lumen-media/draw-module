@@ -1,9 +1,11 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g. 1.0.0)"
+        required: true
 
 permissions:
   contents: write
@@ -24,12 +26,9 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Extract version from tag
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-
       - name: Bump version and sync manifest
         run: |
-          npm pkg set version=$VERSION
+          npm pkg set version=${{ github.event.inputs.version }}
           node scripts/sync-manifest.js
 
       - name: Install dependencies
@@ -38,19 +37,19 @@ jobs:
       - name: Build and pack
         run: npm run pack
 
-      - name: Create release with pack
-        run: |
-          PACK_FILE=$(ls dist/*.lumenpack | head -1)
-          gh release create "$GITHUB_REF_NAME" "$PACK_FILE" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Commit version changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json manifest.json
-          git diff --staged --quiet || git commit -m "chore: bump version to $VERSION [skip ci]"
+          git diff --staged --quiet || git commit -m "chore: bump version to ${{ github.event.inputs.version }} [skip ci]"
           git push origin main
+
+      - name: Create release
+        run: |
+          PACK_FILE=$(ls dist/*.lumenpack | head -1)
+          gh release create "v${{ github.event.inputs.version }}" "$PACK_FILE" \
+            --title "v${{ github.event.inputs.version }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
