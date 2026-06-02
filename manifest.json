@@ -1,10 +1,10 @@
 {
   "id": "com.example.raffle-module",
   "name": "raffle-module",
-  "version": "0.1.0",
+  "version": "v1.0.0",
   "api": "^0.1.0",
   "minLumenVersion": "0.0.0",
-  "description": "A Lumen raffle module",
+  "description": "A raffle module",
   "entry": "main.js",
   "license": "MIT"
 }
