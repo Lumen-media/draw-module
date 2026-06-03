@@ -1,4 +1,5 @@
 import { Card } from "@lumen-media/module-sdk/ui";
+import { t } from "./i18n.js";
 import { useEffect, useRef, useState } from "react";
 import { Wheel } from "react-custom-roulette";
 
@@ -473,7 +474,7 @@ export function createRaffleScreen() {
           style={{ fontFamily: fontFamily || undefined }}
         >
           <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
-            Current Raffle
+            {t("screen.current_raffle")}
           </p>
 
           <NamePicker
@@ -490,7 +491,7 @@ export function createRaffleScreen() {
             className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
             style={{ opacity: doneTiles > 0 && name ? 1 : 0 }}
           >
-            🎉 {name} — Congratulations!
+            {t("screen.winner_congratulations", { name: name ?? "" })}
           </p>
         </div>
       );
@@ -503,7 +504,7 @@ export function createRaffleScreen() {
           style={{ fontFamily: fontFamily || undefined }}
         >
           <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
-            Current Raffle
+            {t("screen.current_raffle")}
           </p>
           <Wheel
             mustStartSpinning={mustSpin}
@@ -524,7 +525,7 @@ export function createRaffleScreen() {
             className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
             style={{ opacity: wheelDone && name ? 1 : 0 }}
           >
-            🎉 {name} — Congratulations!
+            {t("screen.winner_congratulations", { name: name ?? "" })}
           </p>
         </div>
       );
@@ -539,7 +540,7 @@ export function createRaffleScreen() {
         }}
       >
         <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
-          Current Raffle
+          {t("screen.current_raffle")}
         </p>
 
         {animType === "slots" || isCard ? (
@@ -568,7 +569,7 @@ export function createRaffleScreen() {
           className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
           style={{ opacity: allDone && name ? 1 : 0 }}
         >
-          🎉 Congratulations!
+          {t("screen.congratulations")}
         </p>
       </div>
     );

@@ -1,5 +1,6 @@
 import css from "./styles.css?inline";
 import { type LumenHost, LumenPlugin } from "@lumen-media/module-sdk";
+import { setupI18n, translations } from "./i18n.js";
 import { createRaffleConfigurator } from "./RaffleConfigurator.js";
 import { createRaffleScreen } from "./RaffleScreen.js";
 
@@ -11,6 +12,8 @@ export default class RaffleModulePlugin extends LumenPlugin {
     this.styleEl.setAttribute("data-module", host.meta.id);
     this.styleEl.textContent = css;
     document.head.appendChild(this.styleEl);
+
+    setupI18n(host.app.locale, translations);
 
     host.panels.add({
       id: "raffle-module.raffle-screen",

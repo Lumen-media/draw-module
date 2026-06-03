@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { t } from "./i18n.js";
 import type { LumenHost } from "@lumen-media/module-sdk";
 import {
   Badge, Button, Card, Combobox, Input, Label, Popover, ScrollArea,
@@ -247,7 +248,7 @@ export function createRaffleConfigurator(host: LumenHost) {
 
     const handleRaffle = async () => {
       if (eligible.length === 0) {
-        host.ui.notify({ message: "No eligible names to raffle!", level: "warn" });
+        host.ui.notify({ message: t("raffle.no_eligible"), level: "warn" });
         return;
       }
       const currentEligible = [...eligible];
@@ -323,7 +324,7 @@ export function createRaffleConfigurator(host: LumenHost) {
         <Card className="flex flex-1 flex-col gap-5 min-w-0 p-6 border-none rounded-r-none">
 
           <div className="flex items-center justify-between">
-            <h2 className="text-lg leading-none font-bold m-0">Raffle Configurator</h2>
+            <h2 className="text-lg leading-none font-bold m-0">{t("raffle.title")}</h2>
 
             <Popover>
               <Popover.PopoverTrigger render={
@@ -336,11 +337,11 @@ export function createRaffleConfigurator(host: LumenHost) {
 
                   <>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">List</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("list.section")}</span>
                       {creatingList ? (
                         <div className="flex gap-2">
-                          <Input placeholder="List name..." value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus className="flex-1 text-xs h-8" />
-                          <Button size="sm" className="h-auto" onClick={handleCreateList}>Save</Button>
+                          <Input placeholder={t("list.name_placeholder")} value={newListName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewListName(e.target.value)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleCreateList(); if (e.key === "Escape") { setCreatingList(false); setNewListName(""); } }} autoFocus className="flex-1 text-xs h-8" />
+                          <Button size="sm" className="h-auto" onClick={handleCreateList}>{t("action.save")}</Button>
                         </div>
                       ) : (
                         <Select
@@ -352,7 +353,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                           }}
                         >
                           <Select.SelectTrigger className="w-full text-sm">
-                            <Select.SelectValue placeholder="Create list...">
+                            <Select.SelectValue placeholder={t("list.placeholder")}>
                               {activeList ? (
                                 <span className="flex items-center justify-between w-full gap-2 truncate">
                                   <span className="truncate">{activeList.name}</span>
@@ -363,7 +364,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                           </Select.SelectTrigger>
                           <Select.SelectContent>
                             <ScrollArea>
-                              {lists.length > 0 && <Select.SelectItem value="">No list</Select.SelectItem>}
+                              {lists.length > 0 && <Select.SelectItem value="">{t("list.no_list")}</Select.SelectItem>}
                               {lists.map((l) => (
                                 <Select.SelectItem key={l.id} value={l.id}>
                                   <span className="flex items-center justify-between w-full gap-3">
@@ -373,7 +374,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                                 </Select.SelectItem>
                               ))}
                               {lists.length > 0 && <Select.SelectSeparator />}
-                              <Select.SelectItem value="__create__">+ Create list</Select.SelectItem>
+                              <Select.SelectItem value="__create__">{t("list.create")}</Select.SelectItem>
                             </ScrollArea>
                           </Select.SelectContent>
                         </Select>
@@ -381,9 +382,9 @@ export function createRaffleConfigurator(host: LumenHost) {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Appearance</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">{t("settings.appearance")}</span>
                       {([
-                        ["Font", (() => {
+                        [t("settings.font"), (() => {
                           const CB = Combobox as any;
                           return (
                             <CB
@@ -397,7 +398,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                               />
                               <CB.ComboboxContent className="w-56" align="center">
                                 <CB.ComboboxList>
-                                  <CB.ComboboxEmpty style={{ fontSize: 12 }}>No fonts found</CB.ComboboxEmpty>
+                                  <CB.ComboboxEmpty style={{ fontSize: 12 }}>{t("settings.font_not_found")}</CB.ComboboxEmpty>
                                   {fontOptions.map((f: string) => (
                                     <CB.ComboboxItem key={f} value={f}>
                                       <span style={{ fontFamily: f, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block", maxWidth: 200 }}>{f}</span>
@@ -408,7 +409,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                             </CB>
                           );
                         })()],
-                        ["Font Size", (
+                        [t("settings.font_size"), (
                           <Select value={String(settings.fontSize)} onValueChange={(v) => saveSettings({ ...settings, fontSize: Number(v) })}>
                             <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
                             <Select.SelectContent>
@@ -416,13 +417,13 @@ export function createRaffleConfigurator(host: LumenHost) {
                             </Select.SelectContent>
                           </Select>
                         )],
-                        ["Animation", (
+                        [t("settings.animation"), (
                           <Select value={settings.animType} onValueChange={(v) => saveSettings({ ...settings, animType: v as RaffleSettings["animType"] })}>
                             <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
                             <Select.SelectContent>
-                              <Select.SelectItem value="slots">Slots</Select.SelectItem>
-                              <Select.SelectItem value="wheel">Wheel</Select.SelectItem>
-                              <Select.SelectItem value="picker">Picker</Select.SelectItem>
+                              <Select.SelectItem value="slots">{t("settings.anim.slots")}</Select.SelectItem>
+                              <Select.SelectItem value="wheel">{t("settings.anim.wheel")}</Select.SelectItem>
+                              <Select.SelectItem value="picker">{t("settings.anim.picker")}</Select.SelectItem>
                             </Select.SelectContent>
                           </Select>
                         )],
@@ -435,23 +436,23 @@ export function createRaffleConfigurator(host: LumenHost) {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Background</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">{t("settings.background")}</span>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Type</span>
+                        <span className="text-sm text-muted-foreground">{t("settings.bg.type")}</span>
                         <Select value={settings.background} onValueChange={(v) => saveSettings({ ...settings, background: v as RaffleSettings["background"] })}>
                           <Select.SelectTrigger className="text-sm" style={{ width: 130 }}><Select.SelectValue /></Select.SelectTrigger>
                           <Select.SelectContent>
-                            <Select.SelectItem value="default">Default (theme)</Select.SelectItem>
-                            <Select.SelectItem value="transparent">Transparent</Select.SelectItem>
-                            <Select.SelectItem value="card">Card</Select.SelectItem>
-                            <Select.SelectItem value="media">Image / Video</Select.SelectItem>
+                            <Select.SelectItem value="default">{t("settings.bg.default")}</Select.SelectItem>
+                            <Select.SelectItem value="transparent">{t("settings.bg.transparent")}</Select.SelectItem>
+                            <Select.SelectItem value="card">{t("settings.bg.card")}</Select.SelectItem>
+                            <Select.SelectItem value="media">{t("settings.bg.media")}</Select.SelectItem>
                           </Select.SelectContent>
                         </Select>
                       </div>
                       {settings.background === "media" && (
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-muted-foreground flex-1 truncate">
-                            {settings.backgroundMedia?.name ?? "None selected"}
+                            {settings.backgroundMedia?.name ?? t("list.none_selected")}
                           </span>
                           <Button
                             size="sm"
@@ -474,14 +475,14 @@ export function createRaffleConfigurator(host: LumenHost) {
           </div>
 
           <div className="flex flex-col gap-3 bg-secondary rounded-lg py-3.5 px-4.5">
-            <Label className="flex items-center justify-between" htmlFor="remove-duplicates">Remove duplicate names
+            <Label className="flex items-center justify-between" htmlFor="remove-duplicates">{t("participants.remove_duplicates")}
               <Switch id="remove-duplicates" checked={removeDuplicates}
                 onCheckedChange={async (v: boolean) => {
                   setRemoveDuplicates(v);
                   await host.data.json.set("removeDuplicates", v);
                 }} />
             </Label>
-            <Label className="flex items-center justify-between" htmlFor="do-not-repeat">Do not repeat names
+            <Label className="flex items-center justify-between" htmlFor="do-not-repeat">{t("participants.no_repeat")}
               <Switch id="do-not-repeat" checked={doNotRepeat}
                 onCheckedChange={async (v: boolean) => {
                   setDoNotRepeat(v);
@@ -493,7 +494,7 @@ export function createRaffleConfigurator(host: LumenHost) {
           <div className="flex flex-col gap-2">
 
             <div className="flex justify-between items-center">
-              <Label className="text-muted-foreground">Participants (one per line)</Label>
+              <Label className="text-muted-foreground">{t("participants.label")}</Label>
               {activeListId && (
                 <Label className="text-xs text-muted-foreground">
                   List: <span className="text-foreground font-medium">{activeList?.name}</span>
@@ -504,19 +505,19 @@ export function createRaffleConfigurator(host: LumenHost) {
               <TextEditor
                 ref={editorRef}
                 defaultValue={participants}
-                placeholder="One name per line..."
+                placeholder={t("participants.placeholder")}
                 debounce={300}
                 onChange={handleParticipantsChange}
               />
             </ScrollArea>
             <p className="text-xs text-muted-foreground m-0">
-              Paste or type names. Duplicates and repeats will be handled by the settings above.
+              {t("participants.hint")}
             </p>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              Ready to raffle from {eligible.length} name{eligible.length !== 1 ? "s" : ""}
+              {eligible.length !== 1 ? t("raffle.ready_plural", { count: eligible.length }) : t("raffle.ready", { count: eligible.length })}
             </span>
             <div className="flex gap-2">
               {started ? (
@@ -544,7 +545,7 @@ export function createRaffleConfigurator(host: LumenHost) {
         <Separator orientation="vertical" />
 
         <Card className="flex flex-col gap-3 p-6 border-none rounded-l-none bg-secondary" style={{ width: 280 }}>
-          <h3 className="text-base leading-none font-bold m-0">Already Raffled</h3>
+          <h3 className="text-base leading-none font-bold m-0">{t("raffle.already_raffled")}</h3>
           <ScrollArea className="flex-1">
             <div className="flex flex-col gap-2">
               {sortedRaffled.map((entry) => (
