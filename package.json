@@ -12,6 +12,7 @@
     "version": "npm run sync-manifest && git add manifest.json"
   },
   "dependencies": {
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-custom-roulette": "^1.4.1",
     "react-dom": "^19.0.0"

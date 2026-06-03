@@ -28,6 +28,12 @@ export default class RaffleModulePlugin extends LumenPlugin {
         component: createRaffleConfigurator(host),
       });
 
+      host.commands.add({
+        id: "raffle-module.open",
+        title: "Raffle",
+        run: () => host.ui.openDialog("raffle-module.raffle-configurator"),
+      });
+
       host.menus.addItem("tools", {
         type: "action",
         id: "raffle-module.open",

@@ -6,50 +6,7 @@ import {
   Select, Separator, Switch, TextEditor,
 } from "@lumen-media/module-sdk/ui";
 import type { TextEditorRef } from "@lumen-media/module-sdk/ui";
-
-function IconX({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-    </svg>
-  );
-}
-
-function IconShuffle({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="m18 14 3 3-3 3" /><path d="m18 4 3 3-3 3" />
-      <path d="M3 7h3a5 5 0 0 1 5 5 5 5 0 0 0 5 5h4" />
-      <path d="M3 17h3a5 5 0 0 0 5-5 5 5 0 0 1 5-5h4" />
-    </svg>
-  );
-}
-
-function IconRotateCcw({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-    </svg>
-  );
-}
-
-function IconPlay({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
-      <polygon points="6 3 20 12 6 21 6 3" />
-    </svg>
-  );
-}
-
-function IconSettings2({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 17H5" /><path d="M19 7h-9" />
-      <circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" />
-    </svg>
-  );
-}
+import { X, Shuffle, RotateCcw, Play, Settings2 } from "lucide-react";
 
 
 
@@ -313,11 +270,11 @@ export function createRaffleConfigurator(host: LumenHost) {
     if (!loaded) return null;
 
     return (
-      <div className="relative flex select-none" style={{ width: "56.25rem", maxWidth: "95vw", maxHeight: "80vh" }}>
+      <div className="relative flex select-none h-[52dvh] aspect-900/534">
 
         {close && (
           <Button variant="ghost" size="icon-sm" onClick={close} className="absolute top-3 right-3 z-10">
-            <IconX size={16} />
+            <X size={16} />
           </Button>
         )}
 
@@ -330,7 +287,7 @@ export function createRaffleConfigurator(host: LumenHost) {
               <Popover.PopoverTrigger render={
                 <Button variant="ghost" size="icon-sm" />
               }>
-                <IconSettings2 size={16} />
+                <Settings2 size={16} />
               </Popover.PopoverTrigger>
               <Popover.PopoverContent className="w-64">
                 <div className="flex flex-col gap-4">
@@ -491,7 +448,7 @@ export function createRaffleConfigurator(host: LumenHost) {
             </Label>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 flex-1 min-h-0">
 
             <div className="flex justify-between items-center">
               <Label className="text-muted-foreground">{t("participants.label")}</Label>
@@ -501,7 +458,7 @@ export function createRaffleConfigurator(host: LumenHost) {
                 </Label>
               )}
             </div>
-            <ScrollArea className="h-60 overflow-hidden bg-secondary rounded-xl select-text">
+            <ScrollArea className="flex-1 min-h-0 overflow-hidden bg-secondary rounded-xl select-text">
               <TextEditor
                 ref={editorRef}
                 defaultValue={participants}
@@ -522,20 +479,20 @@ export function createRaffleConfigurator(host: LumenHost) {
             <div className="flex gap-2">
               {started ? (
                 <Button variant="outline" onClick={handleExit} className="flex items-center gap-2">
-                  <IconX size={16} /> Exit
+                  <X size={16} /> Exit
                 </Button>
               ) : (
                 <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
-                  <IconRotateCcw size={16} /> Reset
+                  <RotateCcw size={16} /> Reset
                 </Button>
               )}
               {started ? (
                 <Button onClick={handleRaffle} className="flex items-center gap-2">
-                  <IconShuffle size={16} /> Raffle
+                  <Shuffle size={16} /> Raffle
                 </Button>
               ) : (
                 <Button onClick={handleStart} className="flex items-center gap-2">
-                  <IconPlay size={16} /> Start
+                  <Play size={16} /> Start
                 </Button>
               )}
             </div>
@@ -544,9 +501,9 @@ export function createRaffleConfigurator(host: LumenHost) {
 
         <Separator orientation="vertical" />
 
-        <Card className="flex flex-col gap-3 p-6 border-none rounded-l-none bg-secondary" style={{ width: 280 }}>
+        <Card className="flex flex-col gap-3 p-6 border-none rounded-l-none bg-secondary overflow-hidden" style={{ width: 280 }}>
           <h3 className="text-base leading-none font-bold m-0">{t("raffle.already_raffled")}</h3>
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="flex flex-col gap-2">
               {sortedRaffled.map((entry) => (
                 <div key={entry.order} className="flex items-center justify-between bg-card rounded-lg py-2.5 px-3.5">
