@@ -1,6 +1,6 @@
 import { Card } from "@lumen-media/module-sdk/ui";
 import { t } from "./i18n.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Wheel } from "react-custom-roulette";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -272,6 +272,7 @@ interface NamePickerProps {
 }
 
 function NamePicker({ names, prizeIndex, animationKey, duration, fontSize, fontFamily, onDone }: NamePickerProps) {
+  const effectiveDuration = Math.max(6000, duration);
   const itemH = Math.round(fontSize * 1.2);
   const cardW = Math.min(720, Math.max(400, fontSize * 9));
   const fullList = Array.from({ length: PICKER_REPEATS }, () => names).flat();
@@ -295,7 +296,7 @@ function NamePicker({ names, prizeIndex, animationKey, duration, fontSize, fontF
     const frame = (ts: number) => {
       if (doneRef.current) return;
       if (!startRef.current) startRef.current = ts;
-      const t = Math.min((ts - startRef.current) / duration, 1);
+      const t = Math.min((ts - startRef.current) / effectiveDuration, 1);
       const eased = 1 - Math.pow(1 - t, 4);
       setTranslateY(startY + (endY - startY) * eased);
       if (t < 1) {
@@ -312,7 +313,7 @@ function NamePicker({ names, prizeIndex, animationKey, duration, fontSize, fontF
   }, [animationKey, prizeIndex]);
 
   return (
-    <Card className="shadow-2xl bg-card p-8">
+    <Card className="shadow-2xl bg-card" style={{ padding: "48px 56px" }}>
       <div style={{ width: cardW, height: itemH, overflow: "hidden" }}>
         <div style={{ transform: `translateY(${translateY}px)`, willChange: "transform" }}>
           {fullList.map((name, i) => (
@@ -391,6 +392,7 @@ export function createRaffleScreen() {
     const [wheelDone, setWheelDone] = useState(false);
     const [wheelColors, setWheelColors] = useState(DEFAULT_WHEEL_COLORS);
     const [wheelTextColor, setWheelTextColor] = useState("#ffffff");
+    const [primaryRgb, setPrimaryRgb] = useState<RgbColor | null>(null);
 
     useEffect(() => {
       setDoneTiles(0);
@@ -404,6 +406,7 @@ export function createRaffleScreen() {
       const updateWheelTheme = () => {
         const primary = getCssVariableColor("--primary");
         const primaryForeground = getCssVariableColor("--primary-foreground");
+        setPrimaryRgb(primary);
         setWheelColors(createWheelPalette(primary));
         setWheelTextColor(primaryForeground ? rgbToHex(primaryForeground) : getContrastText(primary ?? { r: 54, g: 197, b: 240 }));
       };
@@ -418,20 +421,18 @@ export function createRaffleScreen() {
 
     const handleTileDone = () => setDoneTiles((n) => n + 1);
 
-    const wheelData = participants.length >= 2
-      ? participants.map((p) => ({ option: p }))
-      : [{ option: "?" }, { option: "?" }];
+    const wheelData = participants.length === 0
+      ? [{ option: "?" }, { option: "?" }]
+      : participants.length === 1
+        ? [{ option: participants[0] }, { option: participants[0] }]
+        : participants.map((p) => ({ option: p }));
 
     const isCard = background === "card";
-    const longestSlotNameLength = Math.max(
-      name?.length ?? 0,
-      ...participants.map((participant) => participant.length),
-      6
-    );
-    const slotPlaceholderWidth = Math.min(
-      920,
-      Math.max(620, Math.round(longestSlotNameLength * fontSize * 1.18))
-    );
+    const p = primaryRgb;
+    const glowStyle: CSSProperties = p
+      ? { color: "white", textShadow: `0 0 40px rgba(${p.r},${p.g},${p.b},0.5), 0 0 100px rgba(${p.r},${p.g},${p.b},0.25), 0 2px 8px rgba(0,0,0,0.8)` }
+      : { color: "white", textShadow: "0 2px 8px rgba(0,0,0,0.8)" };
+    const slotPlaceholderWidth = Math.min(720, Math.max(400, fontSize * 9));
     const slotPlaceholderHeight = Math.round(fontSize * 1.8);
 
     const tilesContent = words.length > 0 && (
@@ -473,7 +474,7 @@ export function createRaffleScreen() {
           className="w-full h-full relative flex flex-col items-center justify-center gap-6 select-none"
           style={{ fontFamily: fontFamily || undefined }}
         >
-          <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+          <p className="text-3xl tracking-[0.3em] uppercase" style={glowStyle}>
             {t("screen.current_raffle")}
           </p>
 
@@ -488,8 +489,8 @@ export function createRaffleScreen() {
           />
 
           <p
-            className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
-            style={{ opacity: doneTiles > 0 && name ? 1 : 0 }}
+            className="text-xl transition-opacity duration-400"
+            style={{ opacity: doneTiles > 0 && name ? 1 : 0, ...glowStyle }}
           >
             {t("screen.winner_congratulations", { name: name ?? "" })}
           </p>
@@ -503,7 +504,7 @@ export function createRaffleScreen() {
           className="w-full h-full relative flex flex-col items-center justify-center gap-6 select-none"
           style={{ fontFamily: fontFamily || undefined }}
         >
-          <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+          <p className="text-3xl tracking-[0.3em] uppercase" style={glowStyle}>
             {t("screen.current_raffle")}
           </p>
           <Wheel
@@ -522,8 +523,8 @@ export function createRaffleScreen() {
             spinDuration={0.8}
           />
           <p
-            className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
-            style={{ opacity: wheelDone && name ? 1 : 0 }}
+            className="text-xl transition-opacity duration-400"
+            style={{ opacity: wheelDone && name ? 1 : 0, ...glowStyle }}
           >
             {t("screen.winner_congratulations", { name: name ?? "" })}
           </p>
@@ -539,7 +540,7 @@ export function createRaffleScreen() {
           backgroundColor: undefined,
         }}
       >
-        <p className="text-3xl tracking-[0.3em] uppercase text-muted-foreground mix-blend-plus-lighter">
+        <p className="text-3xl tracking-[0.3em] uppercase" style={glowStyle}>
           {t("screen.current_raffle")}
         </p>
 
@@ -547,27 +548,24 @@ export function createRaffleScreen() {
           <Card
             className="flex flex-col items-center shadow-2xl bg-card"
             style={{
-              padding: "40px 56px",
+              padding: "48px 56px",
               minWidth: slotPlaceholderWidth,
               minHeight: slotPlaceholderHeight + 80,
             }}
           >
-            {tilesContent ?? (
-              <div
-                aria-hidden="true"
-                style={{
-                  width: slotPlaceholderWidth,
-                  height: slotPlaceholderHeight,
-                  opacity: 0,
-                }}
-              />
-            )}
+            <div style={{ position: "relative", width: slotPlaceholderWidth, height: slotPlaceholderHeight }}>
+              {tilesContent && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {tilesContent}
+                </div>
+              )}
+            </div>
           </Card>
         ) : tilesContent}
 
         <p
-          className="text-xl text-muted-foreground transition-opacity duration-400 mix-blend-plus-lighter"
-          style={{ opacity: allDone && name ? 1 : 0 }}
+          className="text-xl transition-opacity duration-400"
+          style={{ opacity: allDone && name ? 1 : 0, ...glowStyle }}
         >
           {t("screen.congratulations")}
         </p>

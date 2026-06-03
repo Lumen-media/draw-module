@@ -34,6 +34,7 @@ interface RaffleSettings {
   fontFamily: string;
   animType: "slots" | "wheel" | "picker";
   animDuration: number;
+  wheelRemoveDrawn: boolean;
 }
 
 const DEFAULT_SETTINGS: RaffleSettings = {
@@ -42,6 +43,7 @@ const DEFAULT_SETTINGS: RaffleSettings = {
   fontFamily: "",
   animType: "slots",
   animDuration: 1600,
+  wheelRemoveDrawn: false,
 };
 
 function stripMarkdownLine(line: string): string {
@@ -196,9 +198,12 @@ export function createRaffleConfigurator(host: LumenHost) {
       }
     };
 
+    const allNames = () => parseNames(participants, removeDuplicates).map((n) => n.startsWith("*") ? n.slice(1) : n);
+
     const handleStart = () => {
+      const wheelParticipants = settings.wheelRemoveDrawn ? eligible : allNames();
       host.presentation.project("raffle-module.raffle-screen", {
-        name: null, animationKey: 0, ...settings, participants: eligible, prizeIndex: -1,
+        name: null, animationKey: 0, ...settings, participants: wheelParticipants, prizeIndex: -1,
       });
       setStarted(true);
     };
@@ -210,7 +215,8 @@ export function createRaffleConfigurator(host: LumenHost) {
       }
       const currentEligible = [...eligible];
       const name = currentEligible[Math.floor(Math.random() * currentEligible.length)];
-      const prizeIndex = currentEligible.indexOf(name);
+      const wheelParticipants = settings.wheelRemoveDrawn ? currentEligible : allNames();
+      const prizeIndex = wheelParticipants.indexOf(name);
 
       if (doNotRepeat) {
         const updated = addRaffledMarker(participants, name);
@@ -231,7 +237,7 @@ export function createRaffleConfigurator(host: LumenHost) {
       setAlreadyRaffled(newRaffled);
       await host.data.json.set("alreadyRaffled", newRaffled);
       host.presentation.project("raffle-module.raffle-screen", {
-        name, animationKey: Date.now(), ...settings, participants: currentEligible, prizeIndex,
+        name, animationKey: Date.now(), ...settings, participants: wheelParticipants, prizeIndex,
       });
     };
 
@@ -390,6 +396,12 @@ export function createRaffleConfigurator(host: LumenHost) {
                           {control}
                         </div>
                       ))}
+                      {settings.animType === "wheel" && (
+                        <Label className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">{t("settings.wheel_remove_drawn")}</span>
+                          <Switch checked={settings.wheelRemoveDrawn} onCheckedChange={(v: boolean) => saveSettings({ ...settings, wheelRemoveDrawn: v })} />
+                        </Label>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-1.5">

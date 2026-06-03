@@ -60,6 +60,8 @@ export const translations: Translations = {
     "settings.anim.wheel": "Wheel",
     "settings.anim.picker": "Picker",
 
+    "settings.wheel_remove_drawn": "Remove drawn from wheel",
+
     "settings.background": "Background",
     "settings.bg.type": "Type",
     "settings.bg.default": "Default (theme)",
@@ -109,6 +111,8 @@ export const translations: Translations = {
     "settings.anim.slots": "Slots",
     "settings.anim.wheel": "Roda",
     "settings.anim.picker": "Seletor",
+
+    "settings.wheel_remove_drawn": "Remover sorteados da roda",
 
     "settings.background": "Fundo",
     "settings.bg.type": "Tipo",
